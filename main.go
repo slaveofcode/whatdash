@@ -19,6 +19,7 @@ func main() {
 	router := mux.NewRouter().StrictSlash(false)
 
 	apiRouter := router.PathPrefix("/api").Subrouter()
+	// wsRouter := router.PathPrefix("/ws").Subrouter()
 
 	for _, route := range route.ApiRoutes {
 		apiRouter.
@@ -27,6 +28,22 @@ func main() {
 			Path(route.Path).
 			Handler(route.Handler)
 	}
+
+	hub := newHub()
+	go hub.run()
+
+	// Upgrade handler websocket connection
+	// wsHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	// 	serveWs(hub, w, r)
+	// })
+
+	// wsRouter.Methods("GET").
+	// 	Path("/").
+	// 	Handler(wsHandler)
+	// router.SkipClean(true)
+	router.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+		serveWs(hub, w, r)
+	})
 
 	router.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("./static/"))))
 
