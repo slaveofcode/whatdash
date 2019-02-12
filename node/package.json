@@ -12,8 +12,10 @@
     "prepare": "npm run build && npm run prepare"
   },
   "dependencies": {
+    "bootstrap-vue": "^2.0.0-rc.11",
     "copyfiles": "^2.1.0",
-    "vue": "^2.5.11"
+    "vue": "^2.5.11",
+    "vue-router": "^3.0.2"
   },
   "browserslist": [
     "> 1%",
