@@ -17,6 +17,22 @@ export default {
     return {
       msg: "Register New Account"
     };
+  },
+  socket: {
+    events: {
+      connect() {
+        console.log("Websocket connected");
+      },
+      disconnect() {
+        console.log("Websocket disconnected");
+      },
+      changed() {
+        console.log("Something changed in Websocket");
+      },
+      error(err) {
+        console.log("Websocket error:", err);
+      }
+    }
   }
 };
 </script>

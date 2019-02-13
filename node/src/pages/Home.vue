@@ -2,8 +2,12 @@
   <div>
     <TopNav></TopNav>
     <b-container>
-      <b-jumbotron header="WhatsApp Collaboration Dashboard " lead="Start by register or reconnect your existing account" bg-variant="transparent" text-variant="#333">
-      </b-jumbotron>
+      <b-jumbotron
+        header="WhatsApp Collaboration Dashboard "
+        lead="Start by register or reconnect your existing account"
+        bg-variant="transparent"
+        text-variant="#333"
+      ></b-jumbotron>
     </b-container>
   </div>
 </template>
@@ -19,6 +23,23 @@ export default {
     return {
       msg: "Welcome to WhatDash"
     };
+  },
+  methods: {},
+  socket: {
+    events: {
+      connect() {
+        console.log("Websocket connected");
+      },
+      disconnect() {
+        console.log("Websocket disconnected");
+      },
+      changed() {
+        console.log("Something changed in Websocket");
+      },
+      error(err) {
+        console.log("Websocket error:", err);
+      }
+    }
   }
 };
 </script>

@@ -11,6 +11,7 @@ Vue.use(BootstrapVue)
 Vue.use(VueWebsocket, 'http://localhost:8081', {
   reconnection: true,
   path: '/ws',
+  transports: ['websocket']
 })
 
 import Home from './pages/Home.vue'

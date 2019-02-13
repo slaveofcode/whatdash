@@ -7,6 +7,7 @@ import (
 	"whatdash/route"
 
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 )
 
 func main() {
@@ -40,13 +41,20 @@ func main() {
 	// wsRouter.Methods("GET").
 	// 	Path("/").
 	// 	Handler(wsHandler)
-	// router.SkipClean(true)
+	router.SkipClean(true)
 	router.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+		serveWs(hub, w, r)
+	})
+	router.HandleFunc("/ws/", func(w http.ResponseWriter, r *http.Request) {
 		serveWs(hub, w, r)
 	})
 
 	router.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("./static/"))))
 
-	http.Handle("/", router)
+	c := cors.New(cors.Options{
+		AllowedOrigins: []string{"*"},
+	})
+
+	http.Handle("/", c.Handler(router))
 	log.Fatalln(http.ListenAndServe(":"+port, nil))
 }
