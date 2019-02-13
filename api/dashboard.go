@@ -2,12 +2,11 @@ package api
 
 import (
 	"net/http"
-
-	whatsapp "github.com/Rhymen/go-whatsapp"
+	"whatdash/wa"
 )
 
 type Dashboard struct {
-	session *whatsapp.Session
+	WA *wa.ActiveConnections
 }
 
 func (c *Dashboard) NewAccount(w http.ResponseWriter, r *http.Request) {

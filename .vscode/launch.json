@@ -17,6 +17,20 @@
       "args": [],
       "showLog": true,
       "trace": "verbose"
+    },
+    {
+      "name": "Resource Send Message",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/resources/sendmsg",
+      "env": {
+        "DEBUG": "*",
+        "PORT": 8081,
+      },
+      "args": [],
+      "showLog": true,
+      "trace": "verbose"
     }
   ]
 }

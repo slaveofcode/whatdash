@@ -54,6 +54,7 @@ func login(wac *whatsapp.Conn) error {
 		go func() {
 			terminal := qrcodeTerminal.New()
 			terminal.Get(<-qr).Print()
+			fmt.Println("Printed:")
 		}()
 		session, err = wac.Login(qr)
 		if err != nil {

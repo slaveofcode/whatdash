@@ -3,6 +3,7 @@ package route
 import (
 	"net/http"
 	"whatdash/api"
+	"whatdash/wa"
 )
 
 type Route struct {
@@ -14,13 +15,28 @@ type Route struct {
 
 type Routes []Route
 
-var DashboardCtrl = &api.Dashboard{}
+func InitRoutes(wa *wa.ActiveConnections) Routes {
+	var DashboardCtrl = &api.Dashboard{WA: wa}
+	var WhatsAppCtrl = &api.WhatsApp{WA: wa}
 
-var ApiRoutes = Routes{
-	Route{
-		Name:    "LIST_CONNECTED_ACCOUNTS",
-		Method:  "GET",
-		Path:    "/list-connected-accounts",
-		Handler: DashboardCtrl.ListConnectedAccounts,
-	},
+	return Routes{
+		Route{
+			Name:    "LIST_CONNECTED_ACCOUNTS",
+			Method:  "GET",
+			Path:    "/list-connected-accounts",
+			Handler: DashboardCtrl.ListConnectedAccounts,
+		},
+		Route{
+			Name:    "WA_LOGIN",
+			Method:  "POST",
+			Path:    "/wa/login",
+			Handler: WhatsAppCtrl.Login,
+		},
+		Route{
+			Name:    "WA_SEND_MSG",
+			Method:  "POST",
+			Path:    "/wa/send-msg",
+			Handler: WhatsAppCtrl.SendMsg,
+		},
+	}
 }
