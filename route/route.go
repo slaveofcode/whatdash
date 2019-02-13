@@ -17,7 +17,7 @@ type Routes []Route
 
 func InitRoutes(wa *wa.ActiveConnections) Routes {
 	var DashboardCtrl = &api.Dashboard{WA: wa}
-	var WhatsAppCtrl = &api.WhatsApp{WA: wa}
+	var WhatsAppCtrl = &api.WhatsApp{ACS: wa}
 
 	return Routes{
 		Route{
