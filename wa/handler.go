@@ -1,6 +1,6 @@
 package wa
 
-import whatsapp "github.com/Rhymen/go-whatsapp"
+import whatsapp "github.com/slaveofcode/go-whatsapp"
 
 type WAHandler struct{}
 

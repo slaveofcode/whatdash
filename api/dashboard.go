@@ -6,7 +6,7 @@ import (
 )
 
 type Dashboard struct {
-	WA *wa.ActiveConnections
+	Storage *wa.Storage
 }
 
 func (c *Dashboard) NewAccount(w http.ResponseWriter, r *http.Request) {

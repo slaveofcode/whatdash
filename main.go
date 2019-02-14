@@ -22,7 +22,7 @@ func main() {
 
 	apiRouter := router.PathPrefix("/api").Subrouter()
 
-	routes := route.InitRoutes(&wa.ActiveConnections{Connections: make(map[string]wa.WAConnectionWrapper)})
+	routes := route.InitRoutes(&wa.Storage{Connections: make(map[string]wa.ConnWrapper)})
 	for _, route := range routes {
 		apiRouter.
 			Methods(route.Method).

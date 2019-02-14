@@ -2,36 +2,48 @@ package api
 
 import (
 	"net/http"
-	"time"
 	"whatdash/wa"
 
-	whatsapp "github.com/Rhymen/go-whatsapp"
+	whatsapp "github.com/slaveofcode/go-whatsapp"
 )
 
 type WhatsApp struct {
-	ACS *wa.ActiveConnections
+	Storage *wa.Storage
 }
 
-func (c *WhatsApp) Login(w http.ResponseWriter, r *http.Request) {
+func (c *WhatsApp) CreateSession(w http.ResponseWriter, r *http.Request) {
 	number := "6287886837648"
 
-	// create new connection
-	wac, err := whatsapp.NewConn(8 * time.Second)
+	wac, err := wa.Connect()
+
 	if err != nil {
 		ResponseJSON(w, 200, []byte(`{"status": "error", "err": "`+err.Error()+`"}`))
 	}
 
 	stringQr := make(chan string)
 
-	wawa := wa.WA{Conn: wac}
-	go func(number string, wawa *wa.WA, wac *whatsapp.Conn, c *WhatsApp, stringQr chan string) {
-		sess, _ := wawa.LoginAccount(number, stringQr)
+	waMgr := wa.Manager{Conn: wac}
+	go func(number string, waMgr *wa.Manager, wac *whatsapp.Conn, c *WhatsApp, stringQr chan string) {
+		sess, _ := waMgr.LoginAccount(number, stringQr)
 
-		c.ACS.Add(number, wac, sess)
-	}(number, &wawa, wac, c, stringQr)
+		c.Storage.Add(number, wac, sess)
+	}(number, &waMgr, wac, c, stringQr)
 
 	ResponseJSON(w, 200, []byte(`{"status": "create", "qr": "`+<-stringQr+`"}`))
 
+	return
+}
+
+func (c *WhatsApp) CheckSession(w http.ResponseWriter, r *http.Request) {
+	number := "6287886837648"
+	wrapper := c.Storage.Get(number)
+
+	if wrapper == nil {
+		ResponseJSON(w, 400, []byte(`{"status": "unregistered"}`))
+		return
+	}
+
+	ResponseJSON(w, 200, []byte(`{"status": "registered"}`))
 	return
 }
 
@@ -43,13 +55,29 @@ func (c *WhatsApp) Logout(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (c *WhatsApp) SendMsg(w http.ResponseWriter, r *http.Request) {
-	wrapper := c.ACS.Get("6287886837648")
+func (c *WhatsApp) SendText(w http.ResponseWriter, r *http.Request) {
+	number := "6287886837648"
+	wrapper := c.Storage.Get(number)
 
 	if wrapper == nil {
-		ResponseJSON(w, 404, []byte(`{"status": "fail"}`))
+		ResponseJSON(w, 400, []byte(`{"status": "please login first"}`))
 		return
 	}
+
+	waMgr := wa.Manager{Conn: wrapper.Conn}
+
+	// handle closed connection
+	// if !waMgr.IsConnected() {
+	newConn, err := wa.Connect()
+
+	if err != nil {
+		ResponseJSON(w, 400, []byte(`{"status": "fail to reload session connection"}`))
+		return
+	}
+
+	waMgr = wa.Manager{Conn: newConn}
+	waMgr.ReloginAccount(number)
+	// }
 
 	msg := whatsapp.TextMessage{
 		Info: whatsapp.MessageInfo{

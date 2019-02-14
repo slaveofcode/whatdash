@@ -15,9 +15,9 @@ type Route struct {
 
 type Routes []Route
 
-func InitRoutes(wa *wa.ActiveConnections) Routes {
-	var DashboardCtrl = &api.Dashboard{WA: wa}
-	var WhatsAppCtrl = &api.WhatsApp{ACS: wa}
+func InitRoutes(s *wa.Storage) Routes {
+	var DashboardCtrl = &api.Dashboard{Storage: s}
+	var WhatsAppCtrl = &api.WhatsApp{Storage: s}
 
 	return Routes{
 		Route{
@@ -27,16 +27,22 @@ func InitRoutes(wa *wa.ActiveConnections) Routes {
 			Handler: DashboardCtrl.ListConnectedAccounts,
 		},
 		Route{
-			Name:    "WA_LOGIN",
+			Name:    "WA_CREATE_SESSION",
 			Method:  "POST",
-			Path:    "/wa/login",
-			Handler: WhatsAppCtrl.Login,
+			Path:    "/wa/session/create",
+			Handler: WhatsAppCtrl.CreateSession,
 		},
 		Route{
-			Name:    "WA_SEND_MSG",
+			Name:    "WA_CHECK_REGISTER",
 			Method:  "POST",
-			Path:    "/wa/send-msg",
-			Handler: WhatsAppCtrl.SendMsg,
+			Path:    "/wa/session/check",
+			Handler: WhatsAppCtrl.CheckSession,
+		},
+		Route{
+			Name:    "WA_SEND_TEXT",
+			Method:  "POST",
+			Path:    "/wa/send/text",
+			Handler: WhatsAppCtrl.SendText,
 		},
 	}
 }
