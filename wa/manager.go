@@ -1,10 +1,8 @@
 package wa
 
 import (
-	"encoding/gob"
 	"fmt"
 	"io"
-	"os"
 	"time"
 
 	whatsapp "github.com/slaveofcode/go-whatsapp"
@@ -59,17 +57,13 @@ func (w *Manager) SendImage(toNumber string, img io.Reader, caption string) erro
 	return nil
 }
 
-func (w *Manager) IsConnected() bool {
-	return w.Conn.IsSocketConnected()
-}
-
 func (w *Manager) LoginAccount(number string, qrStorage chan string) (*whatsapp.Session, error) {
 	session, err := w.Conn.Login(qrStorage)
 	if err != nil {
 		return nil, fmt.Errorf("Error during login WhatsApp: %v\n", err)
 	}
 
-	err = w.SaveLoginSession(number, session)
+	err = (&SessionStorage{}).Save(number, session)
 	if err != nil {
 		return nil, fmt.Errorf("Error on saving session: %v\n", err)
 	}
@@ -78,7 +72,7 @@ func (w *Manager) LoginAccount(number string, qrStorage chan string) (*whatsapp.
 }
 
 func (w *Manager) ReloginAccount(number string) (bool, error) {
-	session, err := w.FetchSavedSession(number)
+	session, err := (&SessionStorage{}).Get(number)
 	if err != nil {
 		return false, fmt.Errorf("Error during fetching stored session: %v\n", err)
 	}
@@ -88,39 +82,10 @@ func (w *Manager) ReloginAccount(number string) (bool, error) {
 		return false, fmt.Errorf("Error during restoring session: %v\n", err)
 	}
 
-	err = w.SaveLoginSession(number, newSession)
+	err = (&SessionStorage{}).Save(number, newSession)
 	if err != nil {
 		return false, fmt.Errorf("Error on saving session: %v\n", err)
 	}
 
 	return true, nil
-}
-
-func (w *Manager) SaveLoginSession(number string, session whatsapp.Session) error {
-	file, err := os.Create(os.TempDir() + "/wa-" + number + ".gob")
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	encoder := gob.NewEncoder(file)
-	err = encoder.Encode(session)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (w *Manager) FetchSavedSession(number string) (whatsapp.Session, error) {
-	session := whatsapp.Session{}
-	file, err := os.Open(os.TempDir() + "/wa-" + number + ".gob")
-	if err != nil {
-		return session, err
-	}
-	defer file.Close()
-	decoder := gob.NewDecoder(file)
-	err = decoder.Decode(&session)
-	if err != nil {
-		return session, err
-	}
-	return session, nil
 }

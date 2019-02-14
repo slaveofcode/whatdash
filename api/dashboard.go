@@ -2,11 +2,10 @@ package api
 
 import (
 	"net/http"
-	"whatdash/wa"
 )
 
 type Dashboard struct {
-	Storage *wa.Storage
+	SessionHandler
 }
 
 func (c *Dashboard) NewAccount(w http.ResponseWriter, r *http.Request) {

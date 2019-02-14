@@ -15,9 +15,11 @@ type Route struct {
 
 type Routes []Route
 
-func InitRoutes(s *wa.Storage) Routes {
-	var DashboardCtrl = &api.Dashboard{Storage: s}
-	var WhatsAppCtrl = &api.WhatsApp{Storage: s}
+func InitRoutes(s *wa.BucketSession) Routes {
+	var waSessHandler = api.SessionHandler{Bucket: s}
+
+	var DashboardCtrl = &api.Dashboard{SessionHandler: waSessHandler}
+	var WhatsAppCtrl = &api.WhatsApp{SessionHandler: waSessHandler}
 
 	return Routes{
 		Route{

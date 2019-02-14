@@ -8,7 +8,7 @@ import (
 )
 
 type WhatsApp struct {
-	Storage *wa.Storage
+	SessionHandler
 }
 
 func (c *WhatsApp) CreateSession(w http.ResponseWriter, r *http.Request) {
@@ -25,8 +25,7 @@ func (c *WhatsApp) CreateSession(w http.ResponseWriter, r *http.Request) {
 	waMgr := wa.Manager{Conn: wac}
 	go func(number string, waMgr *wa.Manager, wac *whatsapp.Conn, c *WhatsApp, stringQr chan string) {
 		sess, _ := waMgr.LoginAccount(number, stringQr)
-
-		c.Storage.Add(number, wac, sess)
+		c.Bucket.Save(number, wac, sess)
 	}(number, &waMgr, wac, c, stringQr)
 
 	ResponseJSON(w, 200, []byte(`{"status": "create", "qr": "`+<-stringQr+`"}`))
@@ -36,7 +35,7 @@ func (c *WhatsApp) CreateSession(w http.ResponseWriter, r *http.Request) {
 
 func (c *WhatsApp) CheckSession(w http.ResponseWriter, r *http.Request) {
 	number := "6287886837648"
-	wrapper := c.Storage.Get(number)
+	wrapper := c.Bucket.Get(number)
 
 	if wrapper == nil {
 		ResponseJSON(w, 400, []byte(`{"status": "unregistered"}`))
@@ -57,39 +56,15 @@ func (c *WhatsApp) Logout(w http.ResponseWriter, r *http.Request) {
 
 func (c *WhatsApp) SendText(w http.ResponseWriter, r *http.Request) {
 	number := "6287886837648"
-	// wrapper := c.Storage.Get(number)
 
-	// if wrapper == nil {
-	// 	ResponseJSON(w, 400, []byte(`{"status": "please login first"}`))
-	// 	return
-	// }
-
-	// waMgr := wa.Manager{Conn: wrapper.Conn}
-
-	// handle closed connection
-	// if !waMgr.IsConnected() {
-	newConn, err := wa.Connect()
+	waMgr, err := c.GetManager(number)
 
 	if err != nil {
-		ResponseJSON(w, 400, []byte(`{"status": "fail to reload session connection"}`))
+		ResponseJSON(w, 400, []byte(`{"status": "please login first"}`))
 		return
 	}
 
-	waMgr := wa.Manager{Conn: newConn}
-	succ, _ := waMgr.ReloginAccount(number)
-	if !succ {
-		ResponseJSON(w, 200, []byte(`{"status": "restore session fail"}`))
-	}
-	// }
-
-	msg := whatsapp.TextMessage{
-		Info: whatsapp.MessageInfo{
-			RemoteJid: "6285716114426@s.whatsapp.net",
-		},
-		Text: "Hello from API",
-	}
-
-	newConn.Send(msg)
+	waMgr.SendMessage("6285716114426", "Ngapain aja bebas!")
 
 	ResponseJSON(w, 200, []byte(`{"status": "sent"}`))
 	return
