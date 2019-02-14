@@ -93,7 +93,7 @@ func (s *SessionStorage) Get(number string) (whatsapp.Session, error) {
 }
 
 func (s *SessionStorage) Destroy(number string) error {
-	err := os.Remove(filepath.Join(s.storePath(), number))
+	err := os.Remove(filepath.Join(s.storePath(), number+".gob"))
 	return err
 }
 

@@ -17,8 +17,7 @@ type BucketSession struct {
 func (c *BucketSession) Sync() {
 	// sync with existing session
 	var storedSessions WASessions
-	sessStorage := SessionStorage{}
-	sessStorage.FetchAll(&storedSessions)
+	(&SessionStorage{}).FetchAll(&storedSessions)
 
 	if len(storedSessions) > 0 {
 		for _, item := range storedSessions {
@@ -37,13 +36,16 @@ func (c *BucketSession) Save(number string, conn *whatsapp.Conn, sess *whatsapp.
 		Conn:     conn,
 		Sess:     sess,
 	}
+
+	// store session to file
+	(&SessionStorage{}).Save(number, *sess)
 }
 
-func (c *BucketSession) RenewConn(number string, conn *whatsapp.Conn) {
-	wrapper := c.Items[number]
-	wrapper.Conn = conn
-	c.Items[number] = wrapper
-}
+// func (c *BucketSession) RenewConn(number string, conn *whatsapp.Conn) {
+// 	wrapper := c.Items[number]
+// 	wrapper.Conn = conn
+// 	c.Items[number] = wrapper
+// }
 
 func (c *BucketSession) IsExist(number string) bool {
 	return c.Items[number].IsFilled
@@ -51,6 +53,7 @@ func (c *BucketSession) IsExist(number string) bool {
 
 func (c *BucketSession) Remove(number string) {
 	delete(c.Items, number)
+	(&SessionStorage{}).Destroy(number)
 }
 
 func (c *BucketSession) Get(number string) *ConnWrapper {
@@ -63,7 +66,9 @@ func (c *BucketSession) Get(number string) *ConnWrapper {
 }
 
 func (c *BucketSession) Reset() {
+	sess := SessionStorage{}
 	for number := range c.Items {
 		delete(c.Items, number)
+		sess.Destroy(number)
 	}
 }

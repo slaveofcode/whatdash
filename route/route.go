@@ -41,6 +41,12 @@ func InitRoutes(s *wa.BucketSession) Routes {
 			Handler: WhatsAppCtrl.CheckSession,
 		},
 		Route{
+			Name:    "WA_DESTROY_SESSION",
+			Method:  "POST",
+			Path:    "/wa/session/destroy",
+			Handler: WhatsAppCtrl.Destroy,
+		},
+		Route{
 			Name:    "WA_SEND_TEXT",
 			Method:  "POST",
 			Path:    "/wa/send/text",

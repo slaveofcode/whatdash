@@ -27,14 +27,30 @@ func (s *SessionHandler) GetManager(number string) (wa.Manager, error) {
 			return waMgr, err
 		}
 
-		waMgr = wa.Manager{Conn: newConn}
-		succ, err := waMgr.ReloginAccount(number)
-		s.Bucket.RenewConn(number, newConn)
-
-		if !succ {
-			return waMgr, err
+		sessStorage := wa.SessionStorage{}
+		session, err := sessStorage.Get(number)
+		if err != nil {
+			return waMgr, fmt.Errorf("Error during fetching stored session: %v", err)
 		}
+
+		waMgr = wa.Manager{Conn: newConn}
+		newSession, err := waMgr.ReloginAccount(session)
+
+		// re-store session to file
+		s.Bucket.Save(number, newConn, newSession)
 	}
 
 	return waMgr, nil
+}
+
+func (s *SessionHandler) CloseManager(number string) error {
+	waMgr, err := s.GetManager(number)
+	if err != nil {
+		return err
+	}
+
+	waMgr.LogoutAccount()
+	s.Bucket.Remove(number)
+
+	return nil
 }

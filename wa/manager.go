@@ -63,7 +63,6 @@ func (w *Manager) LoginAccount(number string, qrStorage chan string) (*whatsapp.
 		return nil, fmt.Errorf("Error during login WhatsApp: %v\n", err)
 	}
 
-	err = (&SessionStorage{}).Save(number, session)
 	if err != nil {
 		return nil, fmt.Errorf("Error on saving session: %v\n", err)
 	}
@@ -71,21 +70,16 @@ func (w *Manager) LoginAccount(number string, qrStorage chan string) (*whatsapp.
 	return &session, nil
 }
 
-func (w *Manager) ReloginAccount(number string) (bool, error) {
-	session, err := (&SessionStorage{}).Get(number)
-	if err != nil {
-		return false, fmt.Errorf("Error during fetching stored session: %v\n", err)
-	}
-
+func (w *Manager) ReloginAccount(session whatsapp.Session) (*whatsapp.Session, error) {
 	newSession, err := w.Conn.RestoreSession(session)
+
 	if err != nil {
-		return false, fmt.Errorf("Error during restoring session: %v\n", err)
+		return nil, fmt.Errorf("Error during restoring session: %v\n", err)
 	}
 
-	err = (&SessionStorage{}).Save(number, newSession)
-	if err != nil {
-		return false, fmt.Errorf("Error on saving session: %v\n", err)
-	}
+	return &newSession, nil
+}
 
-	return true, nil
+func (w *Manager) LogoutAccount() error {
+	return w.Conn.Logout()
 }

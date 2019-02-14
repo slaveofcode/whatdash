@@ -46,12 +46,17 @@ func (c *WhatsApp) CheckSession(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func (c *WhatsApp) LoginOnExisting(w http.ResponseWriter, r *http.Request) {
-	ResponseJSON(w, 200, []byte(`{"list": [1,2,3]}`))
-}
+func (c *WhatsApp) Destroy(w http.ResponseWriter, r *http.Request) {
+	number := "6287886837648"
 
-func (c *WhatsApp) Logout(w http.ResponseWriter, r *http.Request) {
+	err := c.CloseManager(number)
+	if err != nil {
+		ResponseJSON(w, 400, []byte(`{"destroyed": false}`))
+		return
+	}
 
+	ResponseJSON(w, 200, []byte(`{"destroyed": true}`))
+	return
 }
 
 func (c *WhatsApp) SendText(w http.ResponseWriter, r *http.Request) {
@@ -64,7 +69,7 @@ func (c *WhatsApp) SendText(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	waMgr.SendMessage("6285716114426", "Ngapain aja bebas!")
+	waMgr.SendMessage("6285716114426", "Pulang pulang...")
 
 	ResponseJSON(w, 200, []byte(`{"status": "sent"}`))
 	return
