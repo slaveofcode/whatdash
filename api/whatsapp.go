@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"whatdash/wa"
 
@@ -85,7 +86,9 @@ func (c *WhatsApp) GetContacts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	waMgr.GetContacts()
+	contacts := waMgr.GetContacts()
+
+	fmt.Println(contacts)
 
 	ResponseJSON(w, 200, []byte(`{"status": "sent"}`))
 	return
