@@ -57,14 +57,14 @@ func (c *WhatsApp) Logout(w http.ResponseWriter, r *http.Request) {
 
 func (c *WhatsApp) SendText(w http.ResponseWriter, r *http.Request) {
 	number := "6287886837648"
-	wrapper := c.Storage.Get(number)
+	// wrapper := c.Storage.Get(number)
 
-	if wrapper == nil {
-		ResponseJSON(w, 400, []byte(`{"status": "please login first"}`))
-		return
-	}
+	// if wrapper == nil {
+	// 	ResponseJSON(w, 400, []byte(`{"status": "please login first"}`))
+	// 	return
+	// }
 
-	waMgr := wa.Manager{Conn: wrapper.Conn}
+	// waMgr := wa.Manager{Conn: wrapper.Conn}
 
 	// handle closed connection
 	// if !waMgr.IsConnected() {
@@ -75,8 +75,11 @@ func (c *WhatsApp) SendText(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	waMgr = wa.Manager{Conn: newConn}
-	waMgr.ReloginAccount(number)
+	waMgr := wa.Manager{Conn: newConn}
+	succ, _ := waMgr.ReloginAccount(number)
+	if !succ {
+		ResponseJSON(w, 200, []byte(`{"status": "restore session fail"}`))
+	}
 	// }
 
 	msg := whatsapp.TextMessage{
@@ -86,7 +89,7 @@ func (c *WhatsApp) SendText(w http.ResponseWriter, r *http.Request) {
 		Text: "Hello from API",
 	}
 
-	wrapper.Conn.Send(msg)
+	newConn.Send(msg)
 
 	ResponseJSON(w, 200, []byte(`{"status": "sent"}`))
 	return
