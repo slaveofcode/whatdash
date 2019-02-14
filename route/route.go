@@ -47,6 +47,12 @@ func InitRoutes(s *wa.BucketSession) Routes {
 			Handler: WhatsAppCtrl.Destroy,
 		},
 		Route{
+			Name:    "WA_GET_CONTACTS",
+			Method:  "GET",
+			Path:    "/wa/contact/list",
+			Handler: WhatsAppCtrl.GetContacts,
+		},
+		Route{
 			Name:    "WA_SEND_TEXT",
 			Method:  "POST",
 			Path:    "/wa/send/text",

@@ -83,3 +83,11 @@ func (w *Manager) ReloginAccount(session whatsapp.Session) (*whatsapp.Session, e
 func (w *Manager) LogoutAccount() error {
 	return w.Conn.Logout()
 }
+
+func (w *Manager) GetContacts() bool {
+	res, _ := w.Conn.Contacts()
+
+	fmt.Println(res)
+
+	return true
+}

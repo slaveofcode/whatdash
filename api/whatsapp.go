@@ -74,3 +74,19 @@ func (c *WhatsApp) SendText(w http.ResponseWriter, r *http.Request) {
 	ResponseJSON(w, 200, []byte(`{"status": "sent"}`))
 	return
 }
+
+func (c *WhatsApp) GetContacts(w http.ResponseWriter, r *http.Request) {
+	number := "6287886837648"
+
+	waMgr, err := c.GetManager(number)
+
+	if err != nil {
+		ResponseJSON(w, 400, []byte(`{"status": "please login first"}`))
+		return
+	}
+
+	waMgr.GetContacts()
+
+	ResponseJSON(w, 200, []byte(`{"status": "sent"}`))
+	return
+}
