@@ -129,7 +129,7 @@ func (s *SessionStorage) Reset() error {
 	dbSess, db := ConnectionOpen()
 	defer ConnectionClose(dbSess)
 
-	err := db.C(SessionCollName).RemoveAll(bson.M{})
+	_, err := db.C(SessionCollName).RemoveAll(bson.M{})
 
 	return err
 }
