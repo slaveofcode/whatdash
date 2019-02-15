@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"whatdash/wa"
@@ -13,12 +14,22 @@ type WhatsApp struct {
 }
 
 func (c *WhatsApp) CreateSession(w http.ResponseWriter, r *http.Request) {
-	number := "6287886837648"
+	decoder := json.NewDecoder(r.Body)
+	var params struct {
+		Number string `json:"number"`
+	}
+
+	err := decoder.Decode(&params)
+	if err != nil {
+		ShowError(w, "Invalid request")
+		return
+	}
 
 	wac, err := wa.Connect()
 
 	if err != nil {
 		ResponseJSON(w, 200, []byte(`{"status": "error", "err": "`+err.Error()+`"}`))
+		return
 	}
 
 	stringQr := make(chan string)
@@ -27,16 +38,26 @@ func (c *WhatsApp) CreateSession(w http.ResponseWriter, r *http.Request) {
 	go func(number string, waMgr *wa.Manager, wac *whatsapp.Conn, c *WhatsApp, stringQr chan string) {
 		sess, _ := waMgr.LoginAccount(number, stringQr)
 		c.Bucket.Save(number, wac, sess)
-	}(number, &waMgr, wac, c, stringQr)
+	}(params.Number, &waMgr, wac, c, stringQr)
 
-	ResponseJSON(w, 200, []byte(`{"status": "create", "qr": "`+<-stringQr+`"}`))
+	ResponseJSON(w, 200, []byte(`{"status": "created", "qr": "`+<-stringQr+`"}`))
 
 	return
 }
 
 func (c *WhatsApp) CheckSession(w http.ResponseWriter, r *http.Request) {
-	number := "6287886837648"
-	wrapper := c.Bucket.Get(number)
+	decoder := json.NewDecoder(r.Body)
+	var params struct {
+		Number string `json:"number"`
+	}
+
+	err := decoder.Decode(&params)
+	if err != nil {
+		ShowError(w, "Invalid request")
+		return
+	}
+
+	wrapper := c.Bucket.Get(params.Number)
 
 	if wrapper == nil {
 		ResponseJSON(w, 400, []byte(`{"status": "unregistered"}`))
@@ -48,9 +69,18 @@ func (c *WhatsApp) CheckSession(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *WhatsApp) Destroy(w http.ResponseWriter, r *http.Request) {
-	number := "6287886837648"
+	decoder := json.NewDecoder(r.Body)
+	var params struct {
+		Number string `json:"number"`
+	}
 
-	err := c.CloseManager(number)
+	err := decoder.Decode(&params)
+	if err != nil {
+		ShowError(w, "Invalid request")
+		return
+	}
+
+	err = c.CloseManager(params.Number)
 	if err != nil {
 		ResponseJSON(w, 400, []byte(`{"destroyed": false}`))
 		return
@@ -61,16 +91,32 @@ func (c *WhatsApp) Destroy(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *WhatsApp) SendText(w http.ResponseWriter, r *http.Request) {
-	number := "6287886837648"
+	decoder := json.NewDecoder(r.Body)
+	var params struct {
+		From    string `json:"from"`
+		To      string `json:"to"`
+		Message string `json:"message"`
+	}
+	err := decoder.Decode(&params)
 
-	waMgr, err := c.GetManager(number)
+	if err != nil {
+		ShowError(w, "Invalid request")
+		return
+	}
+
+	waMgr, err := c.GetManager(params.From)
 
 	if err != nil {
 		ResponseJSON(w, 400, []byte(`{"status": "please login first"}`))
 		return
 	}
 
-	waMgr.SendMessage("6285716114426", "Pulang pulang...")
+	err = waMgr.SendMessage(params.To, params.Message)
+
+	if err != nil {
+		ResponseJSON(w, 200, []byte(`{"status": "fail"}`))
+		return
+	}
 
 	ResponseJSON(w, 200, []byte(`{"status": "sent"}`))
 	return

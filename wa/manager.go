@@ -84,6 +84,10 @@ func (w *Manager) LogoutAccount() error {
 	return w.Conn.Logout()
 }
 
+func (w *Manager) SetupHandler() {
+	w.Conn.AddHandler(&MsgHandler{})
+}
+
 func (w *Manager) GetContacts() map[string]whatsapp.Contact {
 	w.Conn.Contacts()
 	res := w.Conn.Store.Contacts

@@ -38,6 +38,9 @@ func (s *SessionHandler) GetManager(number string) (wa.Manager, error) {
 
 		// re-store session to file
 		s.Bucket.Save(number, newConn, newSession)
+
+		// added message handler
+		waMgr.SetupHandler()
 	}
 
 	return waMgr, nil

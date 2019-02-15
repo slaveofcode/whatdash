@@ -1,12 +1,34 @@
 package wa
 
-import whatsapp "github.com/slaveofcode/go-whatsapp"
+import (
+	"fmt"
 
-type WAHandler struct{}
+	whatsapp "github.com/slaveofcode/go-whatsapp"
+)
 
-func (*WAHandler) HandleTextMessage(message whatsapp.TextMessage)         {}
-func (*WAHandler) HandleImageMessage(message whatsapp.ImageMessage)       {}
-func (*WAHandler) HandleVideoMessage(message whatsapp.VideoMessage)       {}
-func (*WAHandler) HandleAudioMessage(message whatsapp.AudioMessage)       {}
-func (*WAHandler) HandleDocumentMessage(message whatsapp.DocumentMessage) {}
-func (*WAHandler) HandleJsonMessage(message string)                       {}
+type MsgHandler struct {
+	whatsapp.Handler
+}
+
+// func (*MsgHandler) HandleError(err error) {
+// 	fmt.Println("Error:")
+// }
+
+func (*MsgHandler) HandleTextMessage(message whatsapp.TextMessage) {
+	fmt.Println("MSG:", message.Text)
+}
+func (*MsgHandler) HandleImageMessage(message whatsapp.ImageMessage) {
+	fmt.Println("IMG:", message.Thumbnail)
+}
+func (*MsgHandler) HandleVideoMessage(message whatsapp.VideoMessage) {
+	fmt.Println("VID:", message.Thumbnail)
+}
+func (*MsgHandler) HandleAudioMessage(message whatsapp.AudioMessage) {
+	fmt.Println("AUDIO:", message.Type)
+}
+func (*MsgHandler) HandleDocumentMessage(message whatsapp.DocumentMessage) {
+	fmt.Println("DOC:", message.Title)
+}
+func (*MsgHandler) HandleJsonMessage(message string) {
+	fmt.Println("JSON:", message)
+}
