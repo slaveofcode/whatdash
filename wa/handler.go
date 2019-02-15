@@ -10,17 +10,15 @@ type MsgHandler struct {
 	whatsapp.Handler
 }
 
-// func (*MsgHandler) HandleError(err error) {
-// 	fmt.Println("Error:")
-// }
 func (*MsgHandler) HandleError(err error) {
-	fmt.Println("Error")
+	fmt.Println("Error:", err.Error())
 }
 func (*MsgHandler) HandleTextMessage(message whatsapp.TextMessage) {
 	fmt.Println("MSG:", message.Text)
 }
 func (*MsgHandler) HandleImageMessage(message whatsapp.ImageMessage) {
-	fmt.Println("IMG:", message.Thumbnail)
+	fmt.Println("IMG URL:", message.GetURL())
+	fmt.Println("IMG:", message.Caption)
 }
 func (*MsgHandler) HandleVideoMessage(message whatsapp.VideoMessage) {
 	fmt.Println("VID:", message.Thumbnail)

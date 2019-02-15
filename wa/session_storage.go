@@ -22,7 +22,7 @@ const SessionCollName = "savedSessions"
 
 type SavedSession struct {
 	ID        bson.ObjectId `bson:"_id"`
-	Number    string        `bson:"number`
+	Number    string        `bson:"number"`
 	Session   []byte        `bson:"session"`
 	CreatedAt time.Time     `bson:"createdAt"`
 	UpdatedAt time.Time     `bson:"updatedAt"`
