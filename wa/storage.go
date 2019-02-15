@@ -41,12 +41,6 @@ func (c *BucketSession) Save(number string, conn *whatsapp.Conn, sess *whatsapp.
 	(&SessionStorage{}).Save(number, *sess)
 }
 
-// func (c *BucketSession) RenewConn(number string, conn *whatsapp.Conn) {
-// 	wrapper := c.Items[number]
-// 	wrapper.Conn = conn
-// 	c.Items[number] = wrapper
-// }
-
 func (c *BucketSession) IsExist(number string) bool {
 	return c.Items[number].IsFilled
 }

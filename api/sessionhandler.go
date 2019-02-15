@@ -15,7 +15,7 @@ func (s *SessionHandler) GetManager(number string) (wa.Manager, error) {
 	var waMgr wa.Manager
 
 	if wrapper == nil {
-		return waMgr, fmt.Errorf("Number not registered")
+		return waMgr, fmt.Errorf("Session number not registered")
 	}
 
 	if wrapper.Conn != nil && wrapper.Conn.IsSocketConnected() {

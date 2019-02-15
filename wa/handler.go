@@ -13,7 +13,9 @@ type MsgHandler struct {
 // func (*MsgHandler) HandleError(err error) {
 // 	fmt.Println("Error:")
 // }
-
+func (*MsgHandler) HandleError(err error) {
+	fmt.Println("Error")
+}
 func (*MsgHandler) HandleTextMessage(message whatsapp.TextMessage) {
 	fmt.Println("MSG:", message.Text)
 }

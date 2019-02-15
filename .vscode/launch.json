@@ -12,6 +12,12 @@
       "program": "${workspaceFolder}",
       "env": {
         "PORT": 8081,
+        "DB_URL": "mongodb://localhost:27022/whatdash",
+        "ENV": "development",
+        "DB_REPLICA_1": "",
+        "DB_REPLICA_2": "",
+        "DB_REPLICA_3": "",
+        "DB_NAME": "whatdash",
       },
       "args": [],
       "showLog": true,
