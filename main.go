@@ -22,7 +22,12 @@ func main() {
 
 	apiRouter := router.PathPrefix("/api").Subrouter()
 
-	storage := wa.BucketSession{Items: make(map[string]wa.ConnWrapper)}
+	dbSess, _ := wa.ConnectionOpen()
+
+	storage := wa.BucketSession{
+		Items:      make(map[string]wa.ConnWrapper),
+		MgoSession: dbSess,
+	}
 	storage.Sync()
 	routes := route.InitRoutes(&storage)
 	for _, route := range routes {

@@ -7,8 +7,9 @@ import (
 	"os"
 	"time"
 
+	mgo "github.com/globalsign/mgo"
+	"github.com/globalsign/mgo/bson"
 	whatsapp "github.com/slaveofcode/go-whatsapp"
-	"gopkg.in/mgo.v2/bson"
 )
 
 type WASession struct {
@@ -28,18 +29,22 @@ type SavedSession struct {
 	UpdatedAt time.Time     `bson:"updatedAt"`
 }
 
-type SessionStorage struct{}
+type SessionStorage struct {
+	MgoSession *mgo.Session
+}
 
 func (s *SessionStorage) storePath() string {
 	return os.TempDir() + "/whatdash/"
 }
 
 func (s *SessionStorage) FetchAll(storedSessions *WASessions) {
-	dbSess, db := ConnectionOpen()
-	defer ConnectionClose(dbSess)
+	defer s.MgoSession.Close()
 
 	var savedSessions []SavedSession
-	err := db.C(SessionCollName).Find(bson.M{}).All(&savedSessions)
+	err := s.MgoSession.DB(DBName()).
+		C(SessionCollName).
+		Find(bson.M{}).
+		All(&savedSessions)
 
 	if err != nil {
 		fmt.Println("Fetching session error", err)
@@ -60,8 +65,7 @@ func (s *SessionStorage) FetchAll(storedSessions *WASessions) {
 }
 
 func (s *SessionStorage) Save(number string, session whatsapp.Session) error {
-	dbSess, db := ConnectionOpen()
-	defer ConnectionClose(dbSess)
+	defer s.MgoSession.Close()
 
 	var dummyBuff bytes.Buffer
 	encoder := gob.NewEncoder(&dummyBuff)
@@ -71,7 +75,12 @@ func (s *SessionStorage) Save(number string, session whatsapp.Session) error {
 	}
 
 	var existingSession SavedSession
-	err = db.C(SessionCollName).Find(bson.M{"number": number}).One(&existingSession)
+	db := s.MgoSession.DB(DBName())
+	err = db.
+		C(SessionCollName).
+		Find(bson.M{"number": number}).
+		One(&existingSession)
+
 	if err == nil && existingSession.ID != "" {
 		err = db.C(SessionCollName).Update(bson.M{"number": number}, bson.M{"$set": bson.M{"session": dummyBuff.Bytes(), "updatedAt": time.Now()}})
 	} else {
@@ -93,13 +102,15 @@ func (s *SessionStorage) Save(number string, session whatsapp.Session) error {
 
 func (s *SessionStorage) Get(number string) (whatsapp.Session, error) {
 	session := whatsapp.Session{}
-	dbSess, db := ConnectionOpen()
-	defer ConnectionClose(dbSess)
+	defer s.MgoSession.Close()
 
 	var savedSession SavedSession
-	err := db.C(SessionCollName).Find(bson.M{
-		"number": number,
-	}).One(&savedSession)
+	err := s.MgoSession.DB(DBName()).
+		C(SessionCollName).
+		Find(bson.M{
+			"number": number,
+		}).
+		One(&savedSession)
 
 	if err != nil {
 		return session, err
@@ -117,19 +128,21 @@ func (s *SessionStorage) Get(number string) (whatsapp.Session, error) {
 }
 
 func (s *SessionStorage) Destroy(number string) error {
-	dbSess, db := ConnectionOpen()
-	defer ConnectionClose(dbSess)
+	defer s.MgoSession.Close()
 
-	err := db.C(SessionCollName).Remove(bson.M{"number": number})
+	err := s.MgoSession.DB(DBName()).
+		C(SessionCollName).
+		Remove(bson.M{"number": number})
 
 	return err
 }
 
 func (s *SessionStorage) Reset() error {
-	dbSess, db := ConnectionOpen()
-	defer ConnectionClose(dbSess)
+	defer s.MgoSession.Close()
 
-	_, err := db.C(SessionCollName).RemoveAll(bson.M{})
+	_, err := s.MgoSession.DB(DBName()).
+		C(SessionCollName).
+		RemoveAll(bson.M{})
 
 	return err
 }

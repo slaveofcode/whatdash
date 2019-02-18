@@ -1,6 +1,7 @@
 package wa
 
 import (
+	mgo "github.com/globalsign/mgo"
 	whatsapp "github.com/slaveofcode/go-whatsapp"
 )
 
@@ -11,13 +12,14 @@ type ConnWrapper struct {
 }
 
 type BucketSession struct {
-	Items map[string]ConnWrapper
+	Items      map[string]ConnWrapper
+	MgoSession *mgo.Session
 }
 
 func (c *BucketSession) Sync() {
 	// sync with existing session
 	var storedSessions WASessions
-	(&SessionStorage{}).FetchAll(&storedSessions)
+	(&SessionStorage{MgoSession: c.MgoSession.Copy()}).FetchAll(&storedSessions)
 
 	if len(storedSessions) > 0 {
 		for _, item := range storedSessions {
@@ -38,7 +40,7 @@ func (c *BucketSession) Save(number string, conn *whatsapp.Conn, sess *whatsapp.
 	}
 
 	// store session to file
-	(&SessionStorage{}).Save(number, *sess)
+	(&SessionStorage{MgoSession: c.MgoSession.Copy()}).Save(number, *sess)
 }
 
 func (c *BucketSession) IsExist(number string) bool {
@@ -47,7 +49,7 @@ func (c *BucketSession) IsExist(number string) bool {
 
 func (c *BucketSession) Remove(number string) {
 	delete(c.Items, number)
-	(&SessionStorage{}).Destroy(number)
+	(&SessionStorage{MgoSession: c.MgoSession.Copy()}).Destroy(number)
 }
 
 func (c *BucketSession) Get(number string) *ConnWrapper {
@@ -60,7 +62,7 @@ func (c *BucketSession) Get(number string) *ConnWrapper {
 }
 
 func (c *BucketSession) Reset() {
-	sess := SessionStorage{}
+	sess := SessionStorage{MgoSession: c.MgoSession.Copy()}
 	for number := range c.Items {
 		delete(c.Items, number)
 		sess.Destroy(number)

@@ -19,7 +19,7 @@ func (s *SessionHandler) GetManager(number string) (wa.Manager, error) {
 	}
 
 	if wrapper.Conn != nil && wrapper.Conn.IsSocketConnected() {
-		waMgr = wa.Manager{Conn: wrapper.Conn}
+		waMgr = wa.Manager{Conn: wrapper.Conn, OwnerNumber: number}
 	} else {
 		newConn, err := wa.Connect()
 
@@ -27,20 +27,20 @@ func (s *SessionHandler) GetManager(number string) (wa.Manager, error) {
 			return waMgr, err
 		}
 
-		sessStorage := wa.SessionStorage{}
+		sessStorage := wa.SessionStorage{MgoSession: s.Bucket.MgoSession.Copy()}
 		session, err := sessStorage.Get(number)
 		if err != nil {
 			return waMgr, fmt.Errorf("Error during fetching stored session: %v", err)
 		}
 
-		waMgr = wa.Manager{Conn: newConn}
+		waMgr = wa.Manager{Conn: newConn, OwnerNumber: number}
 		newSession, err := waMgr.ReloginAccount(session)
 
 		// re-store session to file
 		s.Bucket.Save(number, newConn, newSession)
 
 		// added message handler
-		waMgr.SetupHandler()
+		waMgr.SetupHandler(s.Bucket.MgoSession.Copy())
 	}
 
 	return waMgr, nil

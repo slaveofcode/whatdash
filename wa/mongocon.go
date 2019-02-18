@@ -6,7 +6,7 @@ import (
 	"net"
 	"os"
 
-	mgo "gopkg.in/mgo.v2"
+	mgo "github.com/globalsign/mgo"
 )
 
 func ConnectionCluster() (*mgo.Session, error, string) {
@@ -67,4 +67,8 @@ func ConnectionOpen() (*mgo.Session, *mgo.Database) {
 // ConnectionClose Close the connection mongodb with supplying session to close
 func ConnectionClose(session *mgo.Session) {
 	session.Close()
+}
+
+func DBName() string {
+	return os.Getenv("DB_NAME")
 }
