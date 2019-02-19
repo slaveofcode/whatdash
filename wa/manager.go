@@ -98,3 +98,18 @@ func (w *Manager) GetContacts() map[string]whatsapp.Contact {
 	res := w.Conn.Store.Contacts
 	return res
 }
+
+func (w *Manager) TriggerLoadMessage(jId string, count int) error {
+	_, err := w.Conn.LoadMessages(jId, count)
+	return err
+}
+
+func (w *Manager) TriggerLoadNextMessage(jId, msgId string, count int) error {
+	_, err := w.Conn.LoadMessagesAfter(jId, msgId, count)
+	return err
+}
+
+func (w *Manager) TriggerLoadPrevMessage(jId, msgId string, count int) error {
+	_, err := w.Conn.LoadMessagesBefore(jId, msgId, count)
+	return err
+}

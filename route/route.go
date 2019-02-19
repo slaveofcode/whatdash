@@ -29,6 +29,12 @@ func InitRoutes(s *wa.BucketSession) Routes {
 			Handler: DashboardCtrl.ListConnectedAccounts,
 		},
 		Route{
+			Name:    "LOAD_CHATS",
+			Method:  "POST",
+			Path:    "/chats",
+			Handler: DashboardCtrl.LoadChats,
+		},
+		Route{
 			Name:    "WA_CREATE_SESSION",
 			Method:  "POST",
 			Path:    "/wa/session/create",
@@ -57,6 +63,24 @@ func InitRoutes(s *wa.BucketSession) Routes {
 			Method:  "POST",
 			Path:    "/wa/send/text",
 			Handler: WhatsAppCtrl.SendText,
+		},
+		Route{
+			Name:    "WA_LOAD_MESSAGES",
+			Method:  "POST",
+			Path:    "/wa/messages/load",
+			Handler: WhatsAppCtrl.TriggerLoadMessage,
+		},
+		Route{
+			Name:    "WA_LOAD_NEW_MESSAGES",
+			Method:  "POST",
+			Path:    "/wa/messages/load-next",
+			Handler: WhatsAppCtrl.TriggerLoadNewMessage,
+		},
+		Route{
+			Name:    "WA_LOAD_OLD_MESSAGES",
+			Method:  "POST",
+			Path:    "/wa/messages/load-prev",
+			Handler: WhatsAppCtrl.TriggerLoadOldMessage,
 		},
 	}
 }

@@ -53,9 +53,23 @@ func (c *BucketSession) Remove(number string) {
 }
 
 func (c *BucketSession) Get(number string) *ConnWrapper {
+	var wrapperExist bool
 	wrapper := c.Items[number]
-	if !wrapper.IsFilled || wrapper.Sess == nil {
-		return nil
+	if wrapper.IsFilled && wrapper.Sess != nil {
+		wrapperExist = true
+	}
+
+	if !wrapperExist {
+		session, err := (&SessionStorage{MgoSession: c.MgoSession.Copy()}).Get(number)
+
+		if err == nil {
+			wrapper = ConnWrapper{
+				IsFilled: true,
+				Conn:     nil,
+				Sess:     &session,
+			}
+			c.Items[number] = wrapper
+		}
 	}
 
 	return &wrapper

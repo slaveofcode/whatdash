@@ -61,7 +61,7 @@ type MessageKeeper struct {
 
 func (mk *MessageKeeper) isMsgExist(db *mgo.Database, msgID string) bool {
 	var msg MsgText
-	db.C(WaMsgCollName).Find(bson.M{"info.id": msgID}).One(&msg)
+	db.C(WaMsgCollName).Find(bson.M{"wamsg.info.id": msgID}).One(&msg)
 	return msg != MsgText{}
 }
 

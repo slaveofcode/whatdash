@@ -129,5 +129,12 @@ func (m *MsgHandler) HandleDocumentMessage(message whatsapp.DocumentMessage) {
 	})
 }
 func (*MsgHandler) HandleJsonMessage(message string) {
-	// fmt.Println("JSON:", message)
+	// if strings.Contains(data, "Msg") || strings.Contains(data, "Presence") {
+	//   var msg []interface{}
+	//   json.Unmarshal([]byte(data), &msg)
+
+	//   // its now your move to do what you wanted here
+	//   if msg[0] == "Msg" { }
+	//   else if acknowledgements["cmd"] == "acks" {
+	// }
 }

@@ -9,7 +9,7 @@ type SessionHandler struct {
 	Bucket *wa.BucketSession
 }
 
-func (s *SessionHandler) GetManager(number string) (wa.Manager, error) {
+func (s *SessionHandler) GetManager(number string, forceNewSession bool) (wa.Manager, error) {
 	wrapper := s.Bucket.Get(number)
 
 	var waMgr wa.Manager
@@ -18,9 +18,16 @@ func (s *SessionHandler) GetManager(number string) (wa.Manager, error) {
 		return waMgr, fmt.Errorf("Session number not registered")
 	}
 
-	if wrapper.Conn != nil && wrapper.Conn.IsSocketConnected() {
+	if wrapper.Conn != nil && wrapper.Conn.IsSocketConnected() && !forceNewSession {
 		waMgr = wa.Manager{Conn: wrapper.Conn, OwnerNumber: number}
+		return waMgr, nil
 	} else {
+
+		// handle existing connection to be replaced
+		if wrapper.Conn != nil && wrapper.Conn.IsSocketConnected() {
+			wrapper.Conn.Logout()
+		}
+
 		newConn, err := wa.Connect()
 
 		if err != nil {
@@ -41,13 +48,13 @@ func (s *SessionHandler) GetManager(number string) (wa.Manager, error) {
 
 		// added message handler
 		waMgr.SetupHandler(s.Bucket.MgoSession.Copy())
-	}
 
-	return waMgr, nil
+		return waMgr, err
+	}
 }
 
 func (s *SessionHandler) CloseManager(number string) error {
-	waMgr, err := s.GetManager(number)
+	waMgr, err := s.GetManager(number, false)
 	if err != nil {
 		return err
 	}

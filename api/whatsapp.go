@@ -104,7 +104,7 @@ func (c *WhatsApp) SendText(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	waMgr, err := c.GetManager(params.From)
+	waMgr, err := c.GetManager(params.From, false)
 
 	if err != nil {
 		ResponseJSON(w, 400, []byte(`{"status": "please login first"}`))
@@ -123,9 +123,18 @@ func (c *WhatsApp) SendText(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *WhatsApp) GetContacts(w http.ResponseWriter, r *http.Request) {
-	number := "6287886837648"
+	decoder := json.NewDecoder(r.Body)
+	var params struct {
+		Number string `json:"number"`
+	}
+	err := decoder.Decode(&params)
 
-	waMgr, err := c.GetManager(number)
+	if err != nil {
+		ShowError(w, "Invalid request")
+		return
+	}
+
+	waMgr, err := c.GetManager(params.Number, false)
 
 	if err != nil {
 		ResponseJSON(w, 400, []byte(`{"status": "please login first"}`))
@@ -137,5 +146,100 @@ func (c *WhatsApp) GetContacts(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(contacts)
 
 	ResponseJSON(w, 200, []byte(`{"status": "sent"}`))
+	return
+}
+
+func (c *WhatsApp) TriggerLoadMessage(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+	var params struct {
+		Number   string `json:"number"`
+		Jid      string `json:"jid"`
+		MsgCount int    `json:"messageCount"`
+	}
+	err := decoder.Decode(&params)
+
+	if err != nil {
+		ShowError(w, "Invalid request")
+		return
+	}
+
+	waMgr, err := c.GetManager(params.Number, true)
+	if err != nil {
+		ResponseJSON(w, 400, []byte(`{"status": "please login first"}`))
+		return
+	}
+
+	err = waMgr.TriggerLoadMessage(params.Jid, params.MsgCount)
+
+	if err != nil {
+		ResponseJSON(w, 400, []byte(`{"status": "failed"}`))
+		return
+	}
+
+	ResponseJSON(w, 200, []byte(`{"status": "requested"}`))
+	return
+}
+
+func (c *WhatsApp) TriggerLoadNewMessage(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+	var params struct {
+		Number        string `json:"number"`
+		Jid           string `json:"jid"`
+		LastMessageID string `json:"lastMessageId"`
+		MsgCount      int    `json:"messageCount"`
+	}
+	err := decoder.Decode(&params)
+
+	if err != nil {
+		ShowError(w, "Invalid request")
+		return
+	}
+
+	waMgr, err := c.GetManager(params.Number, true)
+	if err != nil {
+		ResponseJSON(w, 400, []byte(`{"status": "please login first"}`))
+		return
+	}
+
+	err = waMgr.TriggerLoadNextMessage(params.Jid, params.LastMessageID, params.MsgCount)
+
+	if err != nil {
+		ResponseJSON(w, 400, []byte(`{"status": "failed"}`))
+		return
+	}
+
+	ResponseJSON(w, 200, []byte(`{"status": "requested"}`))
+	return
+}
+
+func (c *WhatsApp) TriggerLoadOldMessage(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+	var params struct {
+		Number    string `json:"number"`
+		Jid       string `json:"jid"`
+		MessageID string `json:"messageId"`
+		MsgCount  int    `json:"messageCount"`
+	}
+	err := decoder.Decode(&params)
+
+	if err != nil {
+		ShowError(w, "Invalid request")
+		return
+	}
+
+	waMgr, err := c.GetManager(params.Number, true)
+	if err != nil {
+		ResponseJSON(w, 400, []byte(`{"status": "please login first"}`))
+		return
+	}
+
+	err = waMgr.TriggerLoadPrevMessage(params.Jid, params.MessageID, params.MsgCount)
+
+	if err != nil {
+		ResponseJSON(w, 400, []byte(`{"status": "failed"}`))
+		return
+	}
+
+	ResponseJSON(w, 200, []byte(`{"status": "requested"}`))
 	return
 }
