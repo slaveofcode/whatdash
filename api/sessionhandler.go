@@ -26,6 +26,7 @@ func (s *SessionHandler) GetManager(number string, forceNewSession bool) (wa.Man
 		// handle existing connection to be replaced
 		if wrapper.Conn != nil && wrapper.Conn.IsSocketConnected() {
 			wrapper.Conn.Logout()
+			s.Bucket.Remove(number)
 		}
 
 		newConn, err := wa.Connect()
@@ -43,11 +44,13 @@ func (s *SessionHandler) GetManager(number string, forceNewSession bool) (wa.Man
 		waMgr = wa.Manager{Conn: newConn, OwnerNumber: number}
 		newSession, err := waMgr.ReloginAccount(session)
 
-		// re-store session to file
-		s.Bucket.Save(number, newConn, newSession)
+		if err == nil {
+			// re-store session to file
+			s.Bucket.Save(number, newConn, newSession)
 
-		// added message handler
-		waMgr.SetupHandler(s.Bucket.MgoSession.Copy())
+			// added message handler
+			waMgr.SetupHandler(s.Bucket.MgoSession.Copy())
+		}
 
 		return waMgr, err
 	}
