@@ -10,18 +10,18 @@ import (
 
 type MsgHandler struct {
 	whatsapp.Handler
-	OwnerNumber string
 	MgoSession  *mgo.Session
+	OwnerNumber string
 }
 
 func (*MsgHandler) HandleError(err error) {
 	fmt.Println("Error:", err.Error())
 }
 func (m *MsgHandler) HandleTextMessage(message whatsapp.TextMessage) {
-	(&MessageKeeper{MgoSession: m.MgoSession}).SaveText(&MsgText{
+	err := (&MessageKeeper{MgoSession: m.MgoSession}).SaveText(&MsgText{
+		ID:          bson.NewObjectId(),
 		OwnerNumber: m.OwnerNumber,
 		WaMsg: WaMsg{
-			ID:   bson.NewObjectId(),
 			Type: "text",
 			Info: MsgInfo{
 				ID:              message.Info.Id,
@@ -35,13 +35,17 @@ func (m *MsgHandler) HandleTextMessage(message whatsapp.TextMessage) {
 		},
 		Text: message.Text,
 	})
+
+	if err != nil {
+		fmt.Println("Error save text", err)
+	}
 }
 func (m *MsgHandler) HandleImageMessage(message whatsapp.ImageMessage) {
 	content, _ := message.Download()
 	err := (&MessageKeeper{MgoSession: m.MgoSession}).SaveMedia(&MsgMedia{
+		ID:          bson.NewObjectId(),
 		OwnerNumber: m.OwnerNumber,
 		WaMsg: WaMsg{
-			ID:   bson.NewObjectId(),
 			Type: "image",
 			Info: MsgInfo{
 				ID:              message.Info.Id,
@@ -58,14 +62,17 @@ func (m *MsgHandler) HandleImageMessage(message whatsapp.ImageMessage) {
 		Thumb:   message.Thumbnail,
 		Content: content,
 	})
-	fmt.Println(err)
+	if err != nil {
+		fmt.Println("Error save img", err)
+	}
 }
 func (m *MsgHandler) HandleVideoMessage(message whatsapp.VideoMessage) {
 	content, _ := message.Download()
-	(&MessageKeeper{MgoSession: m.MgoSession}).SaveMedia(&MsgMedia{
+	err := (&MessageKeeper{MgoSession: m.MgoSession}).SaveMedia(&MsgMedia{
+		ID:          bson.NewObjectId(),
 		OwnerNumber: m.OwnerNumber,
 		WaMsg: WaMsg{
-			ID:   bson.NewObjectId(),
+
 			Type: "video",
 			Info: MsgInfo{
 				ID:              message.Info.Id,
@@ -82,13 +89,17 @@ func (m *MsgHandler) HandleVideoMessage(message whatsapp.VideoMessage) {
 		Thumb:   message.Thumbnail,
 		Content: content,
 	})
+
+	if err != nil {
+		fmt.Println("Error save video", err)
+	}
 }
 func (m *MsgHandler) HandleAudioMessage(message whatsapp.AudioMessage) {
 	content, _ := message.Download()
-	(&MessageKeeper{MgoSession: m.MgoSession}).SaveMedia(&MsgMedia{
+	err := (&MessageKeeper{MgoSession: m.MgoSession}).SaveMedia(&MsgMedia{
+		ID:          bson.NewObjectId(),
 		OwnerNumber: m.OwnerNumber,
 		WaMsg: WaMsg{
-			ID:   bson.NewObjectId(),
 			Type: "audio",
 			Info: MsgInfo{
 				ID:              message.Info.Id,
@@ -103,13 +114,17 @@ func (m *MsgHandler) HandleAudioMessage(message whatsapp.AudioMessage) {
 		Type:    message.Type,
 		Content: content,
 	})
+
+	if err != nil {
+		fmt.Println("Error save audio", err)
+	}
 }
 func (m *MsgHandler) HandleDocumentMessage(message whatsapp.DocumentMessage) {
 	content, _ := message.Download()
-	(&MessageKeeper{MgoSession: m.MgoSession}).SaveDocument(&MsgDoc{
+	err := (&MessageKeeper{MgoSession: m.MgoSession}).SaveDocument(&MsgDoc{
+		ID:          bson.NewObjectId(),
 		OwnerNumber: m.OwnerNumber,
 		WaMsg: WaMsg{
-			ID:   bson.NewObjectId(),
 			Type: "document",
 			Info: MsgInfo{
 				ID:              message.Info.Id,
@@ -127,6 +142,9 @@ func (m *MsgHandler) HandleDocumentMessage(message whatsapp.DocumentMessage) {
 		Thumb:     message.Thumbnail,
 		Content:   content,
 	})
+	if err != nil {
+		fmt.Println("Error save doc", err)
+	}
 }
 func (*MsgHandler) HandleJsonMessage(message string) {
 	// if strings.Contains(data, "Msg") || strings.Contains(data, "Presence") {

@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 	"whatdash/route"
 	"whatdash/wa"
 
@@ -40,10 +41,13 @@ func main() {
 
 	router.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("./static/"))))
 
+	// set timeout request to 2 mins.
+	withTimeout := http.TimeoutHandler(router, time.Second*120, "Timeout....")
+
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
 	})
 
-	http.Handle("/", c.Handler(router))
+	http.Handle("/", c.Handler(withTimeout))
 	log.Fatalln(http.ListenAndServe(":"+port, nil))
 }

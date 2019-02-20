@@ -38,10 +38,10 @@ func (s *SessionStorage) storePath() string {
 }
 
 func (s *SessionStorage) FetchAll(storedSessions *WASessions) {
-	defer s.MgoSession.Close()
-
 	var savedSessions []SavedSession
-	err := s.MgoSession.DB(DBName()).
+	sess := s.MgoSession.Copy()
+	defer sess.Close()
+	err := sess.DB(DBName()).
 		C(SessionCollName).
 		Find(bson.M{}).
 		All(&savedSessions)
@@ -65,8 +65,6 @@ func (s *SessionStorage) FetchAll(storedSessions *WASessions) {
 }
 
 func (s *SessionStorage) Save(number string, session whatsapp.Session) error {
-	defer s.MgoSession.Close()
-
 	var dummyBuff bytes.Buffer
 	encoder := gob.NewEncoder(&dummyBuff)
 	err := encoder.Encode(session)
@@ -75,7 +73,10 @@ func (s *SessionStorage) Save(number string, session whatsapp.Session) error {
 	}
 
 	var existingSession SavedSession
-	db := s.MgoSession.DB(DBName())
+	sess := s.MgoSession.Copy()
+	db := sess.DB(DBName())
+	defer sess.Close()
+
 	err = db.
 		C(SessionCollName).
 		Find(bson.M{"number": number}).
@@ -102,10 +103,12 @@ func (s *SessionStorage) Save(number string, session whatsapp.Session) error {
 
 func (s *SessionStorage) Get(number string) (whatsapp.Session, error) {
 	session := whatsapp.Session{}
-	defer s.MgoSession.Close()
 
 	var savedSession SavedSession
-	err := s.MgoSession.DB(DBName()).
+	sess := s.MgoSession.Copy()
+	defer sess.Close()
+
+	err := sess.DB(DBName()).
 		C(SessionCollName).
 		Find(bson.M{
 			"number": number,
@@ -128,9 +131,10 @@ func (s *SessionStorage) Get(number string) (whatsapp.Session, error) {
 }
 
 func (s *SessionStorage) Destroy(number string) error {
-	defer s.MgoSession.Close()
+	sess := s.MgoSession.Copy()
+	defer sess.Close()
 
-	err := s.MgoSession.DB(DBName()).
+	err := sess.DB(DBName()).
 		C(SessionCollName).
 		Remove(bson.M{"number": number})
 
@@ -138,9 +142,10 @@ func (s *SessionStorage) Destroy(number string) error {
 }
 
 func (s *SessionStorage) Reset() error {
-	defer s.MgoSession.Close()
+	sess := s.MgoSession.Copy()
+	defer sess.Close()
 
-	_, err := s.MgoSession.DB(DBName()).
+	_, err := sess.DB(DBName()).
 		C(SessionCollName).
 		RemoveAll(bson.M{})
 

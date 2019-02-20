@@ -19,7 +19,7 @@ type BucketSession struct {
 func (c *BucketSession) Sync() {
 	// sync with existing session
 	var storedSessions WASessions
-	(&SessionStorage{MgoSession: c.MgoSession.Copy()}).FetchAll(&storedSessions)
+	(&SessionStorage{MgoSession: c.MgoSession}).FetchAll(&storedSessions)
 
 	if len(storedSessions) > 0 {
 		for _, item := range storedSessions {
@@ -40,7 +40,7 @@ func (c *BucketSession) Save(number string, conn *whatsapp.Conn, sess *whatsapp.
 	}
 
 	// store session to file
-	(&SessionStorage{MgoSession: c.MgoSession.Copy()}).Save(number, *sess)
+	(&SessionStorage{MgoSession: c.MgoSession}).Save(number, *sess)
 }
 
 func (c *BucketSession) IsExist(number string) bool {
@@ -49,7 +49,7 @@ func (c *BucketSession) IsExist(number string) bool {
 
 func (c *BucketSession) Remove(number string) {
 	delete(c.Items, number)
-	(&SessionStorage{MgoSession: c.MgoSession.Copy()}).Destroy(number)
+	(&SessionStorage{MgoSession: c.MgoSession}).Destroy(number)
 }
 
 func (c *BucketSession) Get(number string) *ConnWrapper {
@@ -60,7 +60,7 @@ func (c *BucketSession) Get(number string) *ConnWrapper {
 	}
 
 	if !wrapperExist {
-		session, err := (&SessionStorage{MgoSession: c.MgoSession.Copy()}).Get(number)
+		session, err := (&SessionStorage{MgoSession: c.MgoSession}).Get(number)
 
 		if err == nil {
 			wrapper = ConnWrapper{
@@ -76,7 +76,7 @@ func (c *BucketSession) Get(number string) *ConnWrapper {
 }
 
 func (c *BucketSession) Reset() {
-	sess := SessionStorage{MgoSession: c.MgoSession.Copy()}
+	sess := SessionStorage{MgoSession: c.MgoSession}
 	for number := range c.Items {
 		delete(c.Items, number)
 		sess.Destroy(number)

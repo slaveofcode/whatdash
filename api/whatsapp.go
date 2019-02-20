@@ -152,9 +152,10 @@ func (c *WhatsApp) GetContacts(w http.ResponseWriter, r *http.Request) {
 func (c *WhatsApp) TriggerLoadMessage(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	var params struct {
-		Number   string `json:"number"`
-		Jid      string `json:"jid"`
-		MsgCount int    `json:"messageCount"`
+		Number       string `json:"number"`
+		Jid          string `json:"jid"`
+		MsgCount     int    `json:"messageCount"`
+		ReloadSocket bool   `json:"reloadSocket"`
 	}
 	err := decoder.Decode(&params)
 
@@ -163,7 +164,7 @@ func (c *WhatsApp) TriggerLoadMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	waMgr, err := c.GetManager(params.Number, true)
+	waMgr, err := c.GetManager(params.Number, params.ReloadSocket)
 	if err != nil {
 		ResponseJSON(w, 400, []byte(`{"status": "please login first"}`))
 		return
@@ -187,6 +188,7 @@ func (c *WhatsApp) TriggerLoadNewMessage(w http.ResponseWriter, r *http.Request)
 		Jid           string `json:"jid"`
 		LastMessageID string `json:"lastMessageId"`
 		MsgCount      int    `json:"messageCount"`
+		ReloadSocket  bool   `json:"reloadSocket"`
 	}
 	err := decoder.Decode(&params)
 
@@ -195,7 +197,7 @@ func (c *WhatsApp) TriggerLoadNewMessage(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	waMgr, err := c.GetManager(params.Number, true)
+	waMgr, err := c.GetManager(params.Number, params.ReloadSocket)
 	if err != nil {
 		ResponseJSON(w, 400, []byte(`{"status": "please login first"}`))
 		return
@@ -215,10 +217,11 @@ func (c *WhatsApp) TriggerLoadNewMessage(w http.ResponseWriter, r *http.Request)
 func (c *WhatsApp) TriggerLoadOldMessage(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	var params struct {
-		Number    string `json:"number"`
-		Jid       string `json:"jid"`
-		MessageID string `json:"messageId"`
-		MsgCount  int    `json:"messageCount"`
+		Number       string `json:"number"`
+		Jid          string `json:"jid"`
+		MessageID    string `json:"messageId"`
+		MsgCount     int    `json:"messageCount"`
+		ReloadSocket bool   `json:"reloadSocket"`
 	}
 	err := decoder.Decode(&params)
 
@@ -227,7 +230,7 @@ func (c *WhatsApp) TriggerLoadOldMessage(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	waMgr, err := c.GetManager(params.Number, true)
+	waMgr, err := c.GetManager(params.Number, params.ReloadSocket)
 	if err != nil {
 		ResponseJSON(w, 400, []byte(`{"status": "please login first"}`))
 		return

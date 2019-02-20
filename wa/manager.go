@@ -5,7 +5,6 @@ import (
 	"io"
 	"time"
 
-	mgo "github.com/globalsign/mgo"
 	whatsapp "github.com/slaveofcode/go-whatsapp"
 )
 
@@ -86,11 +85,8 @@ func (w *Manager) LogoutAccount() error {
 	return w.Conn.Logout()
 }
 
-func (w *Manager) SetupHandler(mgoSession *mgo.Session) {
-	w.Conn.AddHandler(&MsgHandler{
-		OwnerNumber: w.OwnerNumber,
-		MgoSession:  mgoSession,
-	})
+func (w *Manager) SetupHandler(msgHandler *MsgHandler) {
+	w.Conn.AddHandler(msgHandler)
 }
 
 func (w *Manager) GetContacts() map[string]whatsapp.Contact {

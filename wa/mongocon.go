@@ -45,7 +45,7 @@ func ConnectionSingle() (*mgo.Session, error, string) {
 }
 
 // ConnectionOpen Open connection into mongoDB and returning the session
-func ConnectionOpen() (*mgo.Session, *mgo.Database) {
+func ConnectionOpen() (*mgo.Session, string) {
 	env := os.Getenv("ENV")
 
 	var session *mgo.Session
@@ -61,7 +61,10 @@ func ConnectionOpen() (*mgo.Session, *mgo.Database) {
 		fmt.Println("Some error happens:", err)
 		panic("Couldn't establish connection DB")
 	}
-	return session, session.DB(dbName)
+
+	session.SetMode(mgo.Monotonic, true)
+
+	return session, dbName
 }
 
 // ConnectionClose Close the connection mongodb with supplying session to close

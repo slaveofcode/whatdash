@@ -1,6 +1,9 @@
 package wa
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/slaveofcode/go-whatsapp"
 
 	mgo "github.com/globalsign/mgo"
@@ -18,9 +21,8 @@ type MsgInfo struct {
 }
 
 type WaMsg struct {
-	ID   bson.ObjectId `bson:"_id"`
-	Type string        `bson:"type"`
-	Info MsgInfo       `bson:"info"`
+	Type string  `bson:"type"`
+	Info MsgInfo `bson:"info"`
 }
 
 type MsgJSON struct {
@@ -30,27 +32,30 @@ type MsgJSON struct {
 
 type MsgText struct {
 	WaMsg
-	OwnerNumber string `bson:"ownerNumber"`
-	Text        string `bson:"text"`
+	ID          bson.ObjectId `bson:"_id"`
+	OwnerNumber string        `bson:"ownerNumber"`
+	Text        string        `bson:"text"`
 }
 
 type MsgMedia struct {
 	WaMsg
-	OwnerNumber string `bson:"ownerNumber"`
-	Type        string `bson:"type"`
-	Caption     string `bson:"caption"`
-	Thumb       []byte `bson:"thumb"`
-	Content     []byte `bson:"content"`
+	ID          bson.ObjectId `bson:"_id"`
+	OwnerNumber string        `bson:"ownerNumber"`
+	Type        string        `bson:"type"`
+	Caption     string        `bson:"caption"`
+	Thumb       []byte        `bson:"thumb"`
+	Content     []byte        `bson:"content"`
 }
 
 type MsgDoc struct {
 	WaMsg
-	OwnerNumber string `bson:"ownerNumber"`
-	Type        string `bson:"type"`
-	Title       string `bson:"title"`
-	PageCount   uint32 `bson:"pageCount"`
-	Thumb       []byte `bson:"thumb"`
-	Content     []byte `bson:"content"`
+	ID          bson.ObjectId `bson:"_id"`
+	OwnerNumber string        `bson:"ownerNumber"`
+	Type        string        `bson:"type"`
+	Title       string        `bson:"title"`
+	PageCount   uint32        `bson:"pageCount"`
+	Thumb       []byte        `bson:"thumb"`
+	Content     []byte        `bson:"content"`
 }
 
 const WaMsgCollName = "WaMessages"
@@ -59,53 +64,87 @@ type MessageKeeper struct {
 	MgoSession *mgo.Session
 }
 
-func (mk *MessageKeeper) isMsgExist(db *mgo.Database, msgID string) bool {
+func (mk *MessageKeeper) isMsgTextExist(db *mgo.Database, msgID string) (bool, MsgText) {
 	var msg MsgText
 	db.C(WaMsgCollName).Find(bson.M{"wamsg.info.id": msgID}).One(&msg)
-	return msg != MsgText{}
+	return msg != MsgText{}, msg
+}
+
+func (mk *MessageKeeper) isMsgMediaExist(db *mgo.Database, msgID string) (bool, MsgMedia) {
+	var msg MsgMedia
+	db.C(WaMsgCollName).Find(bson.M{"wamsg.info.id": msgID}).One(&msg)
+	return msg.OwnerNumber != "", msg
+}
+
+func (mk *MessageKeeper) isMsgDocumentExist(db *mgo.Database, msgID string) (bool, MsgDoc) {
+	var msg MsgDoc
+	db.C(WaMsgCollName).Find(bson.M{"wamsg.info.id": msgID}).One(&msg)
+	return msg.OwnerNumber != "", msg
 }
 
 func (mk *MessageKeeper) SaveText(text *MsgText) error {
-	defer mk.MgoSession.Close()
+	sess := mk.MgoSession.Copy()
+	defer sess.Close()
 
-	db := mk.MgoSession.Copy().DB(DBName())
+	db := sess.DB(DBName())
 
-	msgExist := mk.isMsgExist(db, text.Info.ID)
+	msgExist, msg := mk.isMsgTextExist(db, text.WaMsg.Info.ID)
 
+	var err error
 	if !msgExist {
-		err := db.C(WaMsgCollName).Insert(text)
-		return err
+		fmt.Println("Insert text:", text.Text)
+		err = db.C(WaMsgCollName).Insert(text)
+	} else {
+		// check status of message
+		if msg.WaMsg.Info.MessageStatus != text.Info.MessageStatus {
+			fmt.Println("Update text:", text.Text)
+			// update status of message
+			err = db.C(WaMsgCollName).Update(bson.M{"_id": msg.ID}, bson.M{"$set": bson.M{"wamsg.info.msgStatus": text.Info.MessageStatus, "updatedAt": time.Now()}})
+		}
 	}
 
-	return nil
+	return err
 }
 
 func (mk *MessageKeeper) SaveMedia(media *MsgMedia) error {
-	defer mk.MgoSession.Close()
+	sess := mk.MgoSession.Copy()
+	defer sess.Close()
 
-	db := mk.MgoSession.Copy().DB(DBName())
+	db := sess.DB(DBName())
 
-	msgExist := mk.isMsgExist(db, media.Info.ID)
+	msgExist, msg := mk.isMsgMediaExist(db, media.WaMsg.Info.ID)
 
+	var err error
 	if !msgExist {
-		err := db.C(WaMsgCollName).Insert(media)
-		return err
+		err = db.C(WaMsgCollName).Insert(media)
+	} else {
+		// check status of message
+		if msg.WaMsg.Info.MessageStatus != media.Info.MessageStatus {
+			// update status of message
+			err = db.C(WaMsgCollName).Update(bson.M{"_id": msg.ID}, bson.M{"$set": bson.M{"wamsg.info.msgStatus": media.Info.MessageStatus, "updatedAt": time.Now()}})
+		}
 	}
 
-	return nil
+	return err
 }
 
 func (mk *MessageKeeper) SaveDocument(doc *MsgDoc) error {
-	defer mk.MgoSession.Close()
+	sess := mk.MgoSession.Copy()
+	defer sess.Close()
 
-	db := mk.MgoSession.Copy().DB(DBName())
+	db := sess.DB(DBName())
 
-	msgExist := mk.isMsgExist(db, doc.Info.ID)
+	msgExist, msg := mk.isMsgDocumentExist(db, doc.WaMsg.Info.ID)
 
+	var err error
 	if !msgExist {
-		err := db.C(WaMsgCollName).Insert(doc)
-		return err
+		err = db.C(WaMsgCollName).Insert(doc)
+	} else {
+		if msg.WaMsg.Info.MessageStatus != doc.Info.MessageStatus {
+			// update status of message
+			err = db.C(WaMsgCollName).Update(bson.M{"_id": msg.ID}, bson.M{"$set": bson.M{"wamsg.info.msgStatus": doc.Info.MessageStatus, "updatedAt": time.Now()}})
+		}
 	}
 
-	return nil
+	return err
 }

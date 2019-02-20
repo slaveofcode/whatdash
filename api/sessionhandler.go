@@ -35,7 +35,7 @@ func (s *SessionHandler) GetManager(number string, forceNewSession bool) (wa.Man
 			return waMgr, err
 		}
 
-		sessStorage := wa.SessionStorage{MgoSession: s.Bucket.MgoSession.Copy()}
+		sessStorage := wa.SessionStorage{MgoSession: s.Bucket.MgoSession}
 		session, err := sessStorage.Get(number)
 		if err != nil {
 			return waMgr, fmt.Errorf("Error during fetching stored session: %v", err)
@@ -49,7 +49,10 @@ func (s *SessionHandler) GetManager(number string, forceNewSession bool) (wa.Man
 			s.Bucket.Save(number, newConn, newSession)
 
 			// added message handler
-			waMgr.SetupHandler(s.Bucket.MgoSession.Copy())
+			waMgr.SetupHandler(&wa.MsgHandler{
+				MgoSession:  s.Bucket.MgoSession,
+				OwnerNumber: number,
+			})
 		}
 
 		return waMgr, err
