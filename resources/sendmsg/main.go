@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/Baozisoftware/qrcode-terminal-go"
-	"github.com/Rhymen/go-whatsapp"
+	"github.com/slaveofcode/go-whatsapp"
 )
 
 func main() {
@@ -28,9 +28,9 @@ func main() {
 
 	msg := whatsapp.TextMessage{
 		Info: whatsapp.MessageInfo{
-			RemoteJid: "6287886837648@s.whatsapp.net",
+			RemoteJid: "6285716114426@s.whatsapp.net",
 		},
-		Text: "Test @whatsapp api",
+		Text: "Halo Apa kabar nih?",
 	}
 
 	err = wac.Send(msg)
@@ -53,7 +53,9 @@ func login(wac *whatsapp.Conn) error {
 		qr := make(chan string)
 		go func() {
 			terminal := qrcodeTerminal.New()
-			terminal.Get(<-qr).Print()
+			qrstr := <-qr
+			terminal.Get(qrstr).Print()
+			fmt.Println("Printed:", qrstr)
 		}()
 		session, err = wac.Login(qr)
 		if err != nil {

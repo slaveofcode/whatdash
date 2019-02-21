@@ -1,18 +1,18 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import BootstrapVue from 'bootstrap-vue'
-import VueWebsocket from 'vue-websocket'
+// import VueWebsocket from 'vue-websocket'
 
 import "bootstrap/dist/css/bootstrap.min.css"
 import "bootstrap-vue/dist/bootstrap-vue.css"
 
 Vue.use(VueRouter)
 Vue.use(BootstrapVue)
-Vue.use(VueWebsocket, 'http://localhost:8081', {
-  reconnection: true,
-  path: '/ws',
-  transports: ['websocket']
-})
+// Vue.use(VueWebsocket, 'http://localhost:8081', {
+//   reconnection: true,
+//   path: '/ws',
+//   transports: ['websocket']
+// })
 
 import Home from './pages/Home.vue'
 import Register from './pages/Register.vue'

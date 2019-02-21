@@ -4,7 +4,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 	"whatdash/route"
+	"whatdash/wa"
 
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
@@ -20,9 +22,16 @@ func main() {
 	router := mux.NewRouter().StrictSlash(false)
 
 	apiRouter := router.PathPrefix("/api").Subrouter()
-	// wsRouter := router.PathPrefix("/ws").Subrouter()
 
-	for _, route := range route.ApiRoutes {
+	dbSess, _ := wa.ConnectionOpen()
+
+	storage := wa.BucketSession{
+		Items:      make(map[string]wa.ConnWrapper),
+		MgoSession: dbSess,
+	}
+	storage.Sync()
+	routes := route.InitRoutes(&storage)
+	for _, route := range routes {
 		apiRouter.
 			Methods(route.Method).
 			Name(route.Name).
@@ -30,31 +39,15 @@ func main() {
 			Handler(route.Handler)
 	}
 
-	hub := newHub()
-	go hub.run()
-
-	// Upgrade handler websocket connection
-	// wsHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	// 	serveWs(hub, w, r)
-	// })
-
-	// wsRouter.Methods("GET").
-	// 	Path("/").
-	// 	Handler(wsHandler)
-	router.SkipClean(true)
-	router.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		serveWs(hub, w, r)
-	})
-	router.HandleFunc("/ws/", func(w http.ResponseWriter, r *http.Request) {
-		serveWs(hub, w, r)
-	})
-
 	router.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("./static/"))))
+
+	// set timeout request to 2 mins.
+	withTimeout := http.TimeoutHandler(router, time.Second*120, "Timeout....")
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
 	})
 
-	http.Handle("/", c.Handler(router))
+	http.Handle("/", c.Handler(withTimeout))
 	log.Fatalln(http.ListenAndServe(":"+port, nil))
 }
