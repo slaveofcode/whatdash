@@ -167,7 +167,7 @@ func (c *WhatsApp) TriggerLoadMessage(w http.ResponseWriter, r *http.Request) {
 
 	waMgr, err := c.GetManager(params.Number, params.ReloadSocket)
 	if err != nil {
-		ResponseJSON(w, 400, []byte(`{"status": "please login first"}`))
+		ResponseJSON(w, 400, []byte(`{"status": "failed", "reason": "`+err.Error()+`"}`))
 		return
 	}
 

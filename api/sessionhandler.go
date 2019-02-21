@@ -24,10 +24,10 @@ func (s *SessionHandler) GetManager(number string, forceNewSession bool) (wa.Man
 	} else {
 
 		// handle existing connection to be replaced
-		if wrapper.Conn != nil && wrapper.Conn.IsSocketConnected() {
-			wrapper.Conn.Logout()
-			s.Bucket.Remove(number)
-		}
+		// if wrapper.Conn != nil && wrapper.Conn.IsSocketConnected() {
+		// 	wrapper.Conn.Logout()
+		// 	s.Bucket.Remove(number)
+		// }
 
 		newConn, err := wa.Connect()
 
