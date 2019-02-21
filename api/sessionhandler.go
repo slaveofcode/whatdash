@@ -59,14 +59,18 @@ func (s *SessionHandler) GetManager(number string, forceNewSession bool) (wa.Man
 	}
 }
 
-func (s *SessionHandler) CloseManager(number string) error {
+func (s *SessionHandler) CloseManager(number string, force bool) error {
 	waMgr, err := s.GetManager(number, false)
-	if err != nil {
+	if err != nil && !force {
 		return err
 	}
 
-	waMgr.LogoutAccount()
-	s.Bucket.Remove(number)
+	if err == nil {
+		waMgr.LogoutAccount()
+		s.Bucket.Remove(number)
+	} else if err != nil && force {
+		s.Bucket.Remove(number)
+	}
 
 	return nil
 }
