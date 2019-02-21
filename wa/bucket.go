@@ -62,6 +62,10 @@ func (c *BucketSession) Get(number string) *ConnWrapper {
 	if !wrapperExist {
 		session, err := (&SessionStorage{MgoSession: c.MgoSession}).Get(number)
 
+		if err != nil {
+			return nil
+		}
+
 		if err == nil {
 			wrapper = ConnWrapper{
 				IsFilled: true,
