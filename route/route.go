@@ -29,9 +29,15 @@ func InitRoutes(s *wa.BucketSession) Routes {
 			Handler: DashboardCtrl.ListConnectedAccounts,
 		},
 		Route{
+			Name:    "LOAD_CHAT_HISTORY",
+			Method:  "POST",
+			Path:    "/chat/history",
+			Handler: DashboardCtrl.LoadChatHistory,
+		},
+		Route{
 			Name:    "LOAD_CHATS",
 			Method:  "POST",
-			Path:    "/chats",
+			Path:    "/chat/list",
 			Handler: DashboardCtrl.LoadChats,
 		},
 		Route{
