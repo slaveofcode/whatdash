@@ -27,6 +27,7 @@ func (m *MsgHandler) HandleTextMessage(message whatsapp.TextMessage) {
 				ID:              message.Info.Id,
 				RemoteJid:       message.Info.RemoteJid,
 				SenderJid:       message.Info.SenderJid,
+				FromMe:          message.Info.FromMe,
 				Timestamp:       message.Info.Timestamp,
 				PushName:        message.Info.PushName,
 				MessageStatus:   message.Info.Status,
@@ -51,6 +52,7 @@ func (m *MsgHandler) HandleImageMessage(message whatsapp.ImageMessage) {
 				ID:              message.Info.Id,
 				RemoteJid:       message.Info.RemoteJid,
 				SenderJid:       message.Info.SenderJid,
+				FromMe:          message.Info.FromMe,
 				Timestamp:       message.Info.Timestamp,
 				PushName:        message.Info.PushName,
 				MessageStatus:   message.Info.Status,
@@ -78,6 +80,7 @@ func (m *MsgHandler) HandleVideoMessage(message whatsapp.VideoMessage) {
 				ID:              message.Info.Id,
 				RemoteJid:       message.Info.RemoteJid,
 				SenderJid:       message.Info.SenderJid,
+				FromMe:          message.Info.FromMe,
 				Timestamp:       message.Info.Timestamp,
 				PushName:        message.Info.PushName,
 				MessageStatus:   message.Info.Status,
@@ -105,6 +108,7 @@ func (m *MsgHandler) HandleAudioMessage(message whatsapp.AudioMessage) {
 				ID:              message.Info.Id,
 				RemoteJid:       message.Info.RemoteJid,
 				SenderJid:       message.Info.SenderJid,
+				FromMe:          message.Info.FromMe,
 				Timestamp:       message.Info.Timestamp,
 				PushName:        message.Info.PushName,
 				MessageStatus:   message.Info.Status,
@@ -130,6 +134,7 @@ func (m *MsgHandler) HandleDocumentMessage(message whatsapp.DocumentMessage) {
 				ID:              message.Info.Id,
 				RemoteJid:       message.Info.RemoteJid,
 				SenderJid:       message.Info.SenderJid,
+				FromMe:          message.Info.FromMe,
 				Timestamp:       message.Info.Timestamp,
 				PushName:        message.Info.PushName,
 				MessageStatus:   message.Info.Status,
@@ -146,7 +151,14 @@ func (m *MsgHandler) HandleDocumentMessage(message whatsapp.DocumentMessage) {
 		fmt.Println("Error save doc", err)
 	}
 }
+
+func (*MsgHandler) HandleStickerMessage(message whatsapp.StickerMessage) {
+	fmt.Println("Sticker message")
+	fmt.Println("Sticker here")
+}
+
 func (*MsgHandler) HandleJsonMessage(message string) {
+	fmt.Println("JSON:", message)
 	// if strings.Contains(data, "Msg") || strings.Contains(data, "Presence") {
 	//   var msg []interface{}
 	//   json.Unmarshal([]byte(data), &msg)

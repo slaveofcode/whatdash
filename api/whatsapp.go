@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"whatdash/wa"
 
@@ -72,6 +71,7 @@ func (c *WhatsApp) Destroy(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	var params struct {
 		Number string `json:"number"`
+		Force  bool   `json:"force"`
 	}
 
 	err := decoder.Decode(&params)
@@ -80,7 +80,7 @@ func (c *WhatsApp) Destroy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = c.CloseManager(params.Number)
+	err = c.CloseManager(params.Number, params.Force)
 	if err != nil {
 		ResponseJSON(w, 400, []byte(`{"destroyed": false}`))
 		return
@@ -95,6 +95,7 @@ func (c *WhatsApp) SendText(w http.ResponseWriter, r *http.Request) {
 	var params struct {
 		From    string `json:"from"`
 		To      string `json:"to"`
+		GroupID string `json:"groupId"`
 		Message string `json:"message"`
 	}
 	err := decoder.Decode(&params)
@@ -111,7 +112,7 @@ func (c *WhatsApp) SendText(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = waMgr.SendMessage(params.To, params.Message)
+	err = waMgr.SendMessage(params.To, params.Message, params.GroupID)
 
 	if err != nil {
 		ResponseJSON(w, 200, []byte(`{"status": "fail"}`))
@@ -143,9 +144,9 @@ func (c *WhatsApp) GetContacts(w http.ResponseWriter, r *http.Request) {
 
 	contacts := waMgr.GetContacts()
 
-	fmt.Println(contacts)
+	data, _ := json.Marshal(contacts)
 
-	ResponseJSON(w, 200, []byte(`{"status": "sent"}`))
+	ResponseJSON(w, 200, data)
 	return
 }
 

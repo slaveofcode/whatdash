@@ -14,6 +14,7 @@ type MsgInfo struct {
 	ID              string                 `bson:"id"`
 	RemoteJid       string                 `bson:"remoteJid"`
 	SenderJid       string                 `bson:"senderJid"`
+	FromMe          bool                   `bson:"fromMe"`
 	Timestamp       uint64                 `bson:"timestamp"`
 	PushName        string                 `bson:"pushName"`
 	MessageStatus   whatsapp.MessageStatus `bson:"msgStatus"`
