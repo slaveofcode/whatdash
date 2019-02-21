@@ -25,7 +25,7 @@ func InitRoutes(s *wa.BucketSession) Routes {
 		Route{
 			Name:    "LIST_CONNECTED_ACCOUNTS",
 			Method:  "GET",
-			Path:    "/list-connected-accounts",
+			Path:    "/connected-accounts",
 			Handler: DashboardCtrl.ListConnectedAccounts,
 		},
 		Route{

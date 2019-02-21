@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"sort"
+	"time"
 	"whatdash/wa"
 
 	"gopkg.in/mgo.v2/bson"
@@ -18,7 +19,33 @@ type Dashboard struct {
 // }
 
 func (c *Dashboard) ListConnectedAccounts(w http.ResponseWriter, r *http.Request) {
-	ResponseJSON(w, 200, []byte(`{"list": [1,2,3]}`))
+	var sessions []struct {
+		Number    string    `bson:"number" json:"number"`
+		JID       string    `json:"jid"`
+		CreatedAt time.Time `bson:"createdAt" json:"createdAt"`
+		UpdatedAt time.Time `bson:"updatedAt" json:"updatedAt"`
+	}
+
+	mgoSession := c.Bucket.MgoSession.Copy()
+	defer mgoSession.Close()
+
+	err := mgoSession.DB(wa.DBName()).
+		C(wa.SessionCollName).
+		Find(bson.M{}).
+		All(&sessions)
+
+	if err != nil {
+		ResponseJSON(w, 400, []byte(`{"status": "failed", "reason": "`+err.Error()+`"}`))
+		return
+	}
+
+	for key, item := range sessions {
+		sessions[key].JID = item.Number + "@s.whatsapp.net"
+	}
+
+	data, _ := json.Marshal(sessions)
+
+	ResponseJSON(w, 200, data)
 }
 
 // func (c *Dashboard) ReconnectAccount(w http.ResponseWriter, r *http.Request) {
