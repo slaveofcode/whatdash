@@ -95,10 +95,12 @@ func (w *Manager) SetupHandler(msgHandler *MsgHandler) {
 	w.Conn.AddHandler(msgHandler)
 }
 
-func (w *Manager) GetContacts() map[string]whatsapp.Contact {
+func (w *Manager) LoadContacts() {
 	w.Conn.Contacts()
-	res := w.Conn.Store.Contacts
-	return res
+}
+
+func (w *Manager) GetContacts() map[string]whatsapp.Contact {
+	return w.Conn.Store.Contacts
 }
 
 func (w *Manager) TriggerLoadMessage(jId string, count int) error {

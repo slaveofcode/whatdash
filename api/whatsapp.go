@@ -136,14 +136,8 @@ func (c *WhatsApp) GetContacts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	waMgr, err := c.GetManager(params.Number, false)
-
-	if err != nil {
-		ResponseJSON(w, 400, []byte(`{"status": "please login first"}`))
-		return
-	}
-
-	contacts := waMgr.GetContacts()
+	contactStorage := wa.ContactStorage{MgoSession: c.Bucket.MgoSession}
+	err, contacts := contactStorage.FetchAll(params.Number)
 
 	data, _ := json.Marshal(contacts)
 
