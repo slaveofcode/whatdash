@@ -44,7 +44,11 @@ export default {
       const res = await Req.get('/connected-accounts')
       if (res.status === 200) {
         this.accounts = res.data
+      } else {
+        this.error = 'Couldn\'t load connected accounts'
       }
+
+      this.loading = false
     }
   }
 };

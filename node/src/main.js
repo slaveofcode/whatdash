@@ -18,11 +18,13 @@ Vue.use(VueTimeago, {
 import Home from './pages/Home.vue'
 import Register from './pages/Register.vue'
 import Reconnect from './pages/Reconnect.vue'
+import ChatWindow from './pages/ChatWindow.vue'
 
 const routes = [
   { path: '/', name: 'home', component: Home, },
   { path: '/register', name: 'register', component: Register, },
   { path: '/reconnect', name: 'reconnect', component: Reconnect, },
+  { path: '/chat/:id', name: 'chat', component: ChatWindow, },
 ]
 
 const router = new VueRouter({ routes, })

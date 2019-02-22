@@ -2,7 +2,7 @@
   <b-card bg-variant="secondary" text-variant="white" :header="account.number" tag="article" class="account-card mb-2 text-center">
     <b-row>
       <b-col>
-        <p><small class="text-warning">{{account.jid}}</small></p>
+        <p><small class="text-success">{{account.jid}}</small></p>
         <p class="info">
           <strong>Logged in:</strong> <timeago :datetime="account.createdAt" :auto-update="60"></timeago>
         </p>
@@ -14,7 +14,7 @@
     <br>
     <b-row>
       <b-col>
-        <b-button href="#" size="m" variant="warning">Go Chat</b-button>
+        <b-button :to="{name: 'chat', params: { id: account.id } }" size="m" variant="warning">Go Chat</b-button>
       </b-col>
     </b-row>
   </b-card>
@@ -28,7 +28,7 @@
   max-width: 16rem;
 }
 p.info {
-  font-size: 15px;
+  font-size: 14px;
   padding: 0;
   margin: 0;
 }
