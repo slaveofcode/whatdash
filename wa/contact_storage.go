@@ -11,7 +11,6 @@ import (
 const ContactCollName = "contacts"
 
 type Contact struct {
-	ID          string           `bson:"_id"`
 	OwnerNumber string           `bson:"ownerNumber"`
 	JID         string           `bson:"jid"`
 	Contact     whatsapp.Contact `bson:"contact"`
