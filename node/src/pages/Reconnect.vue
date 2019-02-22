@@ -2,21 +2,50 @@
   <div>
     <TopNav></TopNav>
     <b-container>
-      <h1>Reconnect Account</h1>
+      <PageTitle :text="pageTitle"></PageTitle>
+      <b-row class="d-flex justify-content-around align-content-center flex-wrap">
+        <AccountCard v-for="account in accounts" :key="account.number" :account="account"></AccountCard>
+      </b-row>
     </b-container>
   </div>
 </template>
 
 <script>
+import PageTitle from "../components/PageTitle.vue";
 import TopNav from "../components/TopNav.vue";
+import AccountCard from "../components/AccountCard.vue";
+import Req from '../req'
+
 export default {
   components: {
-    TopNav
+    PageTitle,
+    TopNav,
+    AccountCard,
   },
   data() {
     return {
-      msg: "Reconnect Account"
+      pageTitle: "Reconnect Account",
+      loading: false,
+      accounts: null,
+      error: null,
     };
+  },
+  watch: {
+    '$route': 'loadAccounts',
+  },
+  created() {
+    this.loadAccounts()
+  },
+  methods: {
+    async loadAccounts() {
+      this.error = this.accounts = null
+      this.loading = true
+
+      const res = await Req.get('/connected-accounts')
+      if (res.status === 200) {
+        this.accounts = res.data
+      }
+    }
   }
 };
 </script>

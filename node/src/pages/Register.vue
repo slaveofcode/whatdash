@@ -2,20 +2,22 @@
   <div>
     <TopNav></TopNav>
     <b-container>
-      <h1>Register new Account</h1>
+      <PageTitle :text="pageTitle"></PageTitle>
     </b-container>
   </div>
 </template>
 
 <script>
+import PageTitle from "../components/PageTitle.vue";
 import TopNav from "../components/TopNav.vue";
 export default {
   components: {
+    PageTitle,
     TopNav
   },
   data() {
     return {
-      msg: "Register New Account"
+      pageTitle: "Register New Account"
     };
   },
 };

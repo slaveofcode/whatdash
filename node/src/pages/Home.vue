@@ -3,7 +3,7 @@
     <TopNav></TopNav>
     <b-container>
       <b-jumbotron
-        header="WhatsApp Collaboration Dashboard "
+        header="WhatsDash App "
         lead="Start by register or reconnect your existing account"
         bg-variant="transparent"
         text-variant="#333"
@@ -21,7 +21,7 @@ export default {
   },
   data() {
     return {
-      msg: "Welcome to WhatDash"
+      pageTitle: "Welcome to WhatDash"
     };
   },
   methods: {},
