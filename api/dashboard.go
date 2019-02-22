@@ -7,8 +7,17 @@ import (
 	"time"
 	"whatdash/wa"
 
-	"gopkg.in/mgo.v2/bson"
+	"github.com/globalsign/mgo/bson"
+	"github.com/gorilla/mux"
 )
+
+type AccountSession struct {
+	ID        bson.ObjectId `bson:"_id" json:"id"`
+	Number    string        `bson:"number" json:"number"`
+	JID       string        `json:"jid"`
+	CreatedAt time.Time     `bson:"createdAt" json:"createdAt"`
+	UpdatedAt time.Time     `bson:"updatedAt" json:"updatedAt"`
+}
 
 type Dashboard struct {
 	SessionHandler
@@ -19,12 +28,7 @@ type Dashboard struct {
 // }
 
 func (c *Dashboard) ListConnectedAccounts(w http.ResponseWriter, r *http.Request) {
-	var sessions []struct {
-		Number    string    `bson:"number" json:"number"`
-		JID       string    `json:"jid"`
-		CreatedAt time.Time `bson:"createdAt" json:"createdAt"`
-		UpdatedAt time.Time `bson:"updatedAt" json:"updatedAt"`
-	}
+	var sessions []AccountSession
 
 	mgoSession := c.Bucket.MgoSession.Copy()
 	defer mgoSession.Close()
@@ -46,11 +50,31 @@ func (c *Dashboard) ListConnectedAccounts(w http.ResponseWriter, r *http.Request
 	data, _ := json.Marshal(sessions)
 
 	ResponseJSON(w, 200, data)
+	return
 }
 
-// func (c *Dashboard) ReconnectAccount(w http.ResponseWriter, r *http.Request) {
+func (c *Dashboard) DetailAccount(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
 
-// }
+	mgoSession := c.Bucket.MgoSession.Copy()
+	defer mgoSession.Close()
+
+	var account AccountSession
+	err := mgoSession.DB(wa.DBName()).
+		C(wa.SessionCollName).
+		Find(bson.M{"_id": bson.ObjectIdHex(params["id"])}).
+		One(&account)
+
+	if err != nil {
+		ResponseJSON(w, 400, []byte(`{"status": "failed", "reason": "`+err.Error()+`"}`))
+		return
+	}
+
+	data, _ := json.Marshal(account)
+
+	ResponseJSON(w, 200, data)
+	return
+}
 
 func (c *Dashboard) LoadChatHistory(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
