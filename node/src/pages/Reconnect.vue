@@ -41,7 +41,7 @@ export default {
       this.error = this.accounts = null
       this.loading = true
 
-      const res = await Req.get('/connected-accounts')
+      const res = await Req.get('/account/list-connected')
       if (res.status === 200) {
         this.accounts = res.data
       } else {

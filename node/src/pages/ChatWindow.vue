@@ -81,23 +81,20 @@ export default {
   },
   methods: {
     async initPage() {
-      const contacts = await this.loadContacts()
-      const history = await this.loadContacts()
+      const detailAccount = await this.loadAccountDetail(this.$route.params.id)
+      const contacts = await this.loadContacts(detailAccount.number)
+      const history = await this.loadHistory(detailAccount.number)
     },
     async loadAccountDetail(accId) {
-      const acc = await Req.get('/account/detail', {
-        params: {
-          id: accId
-        }
-      })
-      return (c.status === 200) ? c.data : null
+      const acc = await Req.get(`/account/detail/${accId}`)
+      return (acc.status === 200) ? acc.data : null
     },
-    async loadContacts() {
-      const c = await Req.post('/wa/contact/list')
+    async loadContacts(number) {
+      const c = await Req.post('/wa/contact/list', { number, })
       return (c.status === 200) ? c.data : []
     },
-    async loadHistory() {
-      const c = await Req.post('/chat/history')
+    async loadHistory(number) {
+      const c = await Req.post('/chat/history', { number, })
       return (c.status === 200) ? c.data : []
     },
     async loadMessages() {},
