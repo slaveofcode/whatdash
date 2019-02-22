@@ -41,8 +41,8 @@ func main() {
 
 	router.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("./static/"))))
 
-	// set timeout request to 2 mins.
-	withTimeout := http.TimeoutHandler(router, time.Second*120, "Timeout....")
+	// set timeout request to 3 mins.
+	withTimeout := http.TimeoutHandler(router, time.Second*180, "Timeout....")
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},

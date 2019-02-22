@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 	"whatdash/wa"
 
 	whatsapp "github.com/slaveofcode/go-whatsapp"
@@ -245,5 +246,29 @@ func (c *WhatsApp) TriggerLoadOldMessage(w http.ResponseWriter, r *http.Request)
 	}
 
 	ResponseJSON(w, 200, []byte(`{"status": "requested"}`))
+	return
+}
+
+func (c *WhatsApp) LongPoolExp(w http.ResponseWriter, r *http.Request) {
+
+	val := make(chan string)
+
+	go func() {
+		for i := 0; i <= 10; i++ {
+			time.Sleep(time.Second)
+		}
+
+		val <- "Finished"
+	}()
+
+	var res string
+
+	select {
+	case res = <-val:
+		ResponseJSON(w, 200, []byte(`{"status": "`+res+`"}`))
+	case <-time.After(time.Second * 15):
+		ResponseJSON(w, 200, []byte(`{"status": "timeout"}`))
+	}
+
 	return
 }

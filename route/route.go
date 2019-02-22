@@ -88,5 +88,11 @@ func InitRoutes(s *wa.BucketSession) Routes {
 			Path:    "/wa/messages/load-prev",
 			Handler: WhatsAppCtrl.TriggerLoadOldMessage,
 		},
+		Route{
+			Name:    "WA_EXP",
+			Method:  "POST",
+			Path:    "/wa/messages/longpool",
+			Handler: WhatsAppCtrl.LongPoolExp,
+		},
 	}
 }
