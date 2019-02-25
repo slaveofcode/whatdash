@@ -5,17 +5,29 @@
       <PageTitle :text="pageTitle"></PageTitle>
       <div class="chat-container">
         <div class="section-contacts">
-          <div class="contact-item" v-for="chat in contactChats" :key="chat.id">
-            <p>
-              <span class="item-title">{{chat.name}}</span>
-              <span class="item-count">({{chat.msgCount}})</span>
-            </p>
-            <span class="item-time"><timeago :datetime="chat.time" :auto-update="60"></timeago></span>
-          </div>
+          <ContactItem 
+            v-for="contact in contactChats" 
+            :key="contact.id" 
+            v-bind:contact="contact"
+            @click.native="startConversation(contact)"
+          ></ContactItem>
         </div>
         <div class="section-messages">
+          <div class="section-chat-header">
+            <p>TADA Team</p>
+          </div>
           <div class="section-chat">
-            <span class="empty-message">Select some chat to start conversation.</span>
+            <span class="empty-message hide">Select some chat to start conversation.</span>
+            <div class="chat-display">
+              <MessageItem></MessageItem>
+              <MessageItem from-me="true"></MessageItem>
+              <MessageItem from-me="true"></MessageItem>
+              <MessageItem from-me="true"></MessageItem>
+              <MessageItem from-me="true"></MessageItem>
+              <MessageItem from-me="true"></MessageItem>
+              <MessageItem from-me="true"></MessageItem>
+              <MessageItem from-me="true"></MessageItem>
+            </div>
           </div>
           <div class="section-input">
             <textarea-autosize 
@@ -49,30 +61,6 @@
   border-top: 1px solid #dad8d8;
 }
 
-.section-contacts .contact-item {
-  font-size: 13px;
-  padding: 10px 10px;
-  border-bottom: 1px solid #ddd;
-  cursor: pointer;
-}
-
-.section-contacts .contact-item:hover {
-  background: rgba(0, 123, 255, .1);
-  border-bottom: 1px solid rgba(0, 123, 255, .2);
-}
-
-.section-contacts .contact-item p {
-  margin: 0;
-  padding: 0;
-  font-weight: bold;
-  color: #333;
-}
-
-.section-contacts .contact-item .item-time {
-  font-size: 11px;
-  color: #075419;
-}
-
 .section-messages {
   display: flex;
   flex-direction: column;
@@ -81,11 +69,23 @@
   flex-basis: auto;
 }
 
+.section-messages .section-chat-header {
+  font-weight: bold;
+  padding: 15px 15px 0;
+  margin: 0;
+  background: #eee;
+  border-top: 1px solid #dad8d8;
+  border-right: 1px solid #dad8d8;
+}
+
 .section-chat {
+  display: flex;
+  flex-direction: column;
   flex-grow: 1;
   flex-shrink: 1;
   flex-basis: auto;
   background: #eee;
+  overflow-y: auto;
 }
 
 .section-chat .empty-message {
@@ -94,6 +94,20 @@
   display: flex;
   justify-content: center;
   padding-top: 25vh;
+}
+
+.section-chat .empty-message.hide, .section-chat .chat-display.hide, .section-chat-header.hide {
+  display: none;
+}
+
+.section-chat .chat-display {
+  flex-grow: 1;
+  flex-shrink: 1;
+  flex-basis: auto;
+  background: #ffffff;
+  border-right: 1px solid #e0e0e0;
+  border-top: 1px solid #e9e7e7;
+  padding-top: 15px;
 }
 
 .section-input {
@@ -119,13 +133,16 @@
 <script>
 import PageTitle from "../components/PageTitle.vue";
 import TopNav from "../components/TopNav.vue";
+import ContactItem from "../components/chat/ContactItem.vue";
+import MessageItem from "../components/chat/MessageItem.vue";
 import Req from "../req";
 
 export default {
   components: {
     TopNav,
     PageTitle,
-
+    MessageItem,
+    ContactItem,
   },
   data() {
     return {
@@ -135,6 +152,7 @@ export default {
       chatHistory: [],
       contactChats: [],
       chatInput: null,
+      conversations: []
     }
   },
   watch: {
@@ -185,7 +203,7 @@ export default {
         parsed.push({
           id: history.jid,
           name: contactName,
-          time: new Date(history.lastChatTime),
+          time: new Date(history.lastChatTime * 1000),
           msgCount: history.msgCount,
         })
       }
@@ -196,6 +214,19 @@ export default {
     async loadContactMessages() {},
     async sendMessage(){},
     async poolMessage(){},
+    startConversation(contact) {
+      const conversation = this.conversations.find(c => c.id === contact.id)
+
+      if (!conversation) {
+        // load fresh message 
+      } else {
+        // load existing message + new message on server 
+      }
+      
+      // check if chat container already created
+      // hide existing container if exist and show selected chat
+      console.log("start conversation on", contact.name)
+    }
   }
 }
 </script>
