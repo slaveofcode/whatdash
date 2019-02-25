@@ -124,6 +124,36 @@ func (c *WhatsApp) SendText(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+func (c *WhatsApp) LoadContacts(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+	var params struct {
+		Number       string `json:"number"`
+		ReloadSocket bool   `json:"reloadSocket"`
+	}
+	err := decoder.Decode(&params)
+
+	if err != nil {
+		ShowError(w, "Invalid request")
+		return
+	}
+
+	waMgr, err := c.GetManager(params.Number, params.ReloadSocket)
+	if err != nil {
+		ResponseJSON(w, 400, []byte(`{"status": "failed", "reason": "`+err.Error()+`"}`))
+		return
+	}
+
+	err = waMgr.LoadContacts()
+
+	if err != nil {
+		ResponseJSON(w, 400, []byte(`{"status": "failed"}`))
+		return
+	}
+
+	ResponseJSON(w, 200, []byte(`{"status": "requested"}`))
+	return
+}
+
 func (c *WhatsApp) GetContacts(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	var params struct {

@@ -95,8 +95,9 @@ func (w *Manager) SetupHandler(msgHandler *MsgHandler) {
 	w.Conn.AddHandler(msgHandler)
 }
 
-func (w *Manager) LoadContacts() {
-	w.Conn.Contacts()
+func (w *Manager) LoadContacts() error {
+	_, err := w.Conn.Contacts()
+	return err
 }
 
 func (w *Manager) GetContacts() map[string]whatsapp.Contact {
