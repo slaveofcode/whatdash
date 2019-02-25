@@ -2,12 +2,14 @@ import Vue from 'vue'
 import VueRouter from 'vue-router'
 import BootstrapVue from 'bootstrap-vue'
 import VueTimeago from 'vue-timeago'
+import VueTextareaAutosize from 'vue-textarea-autosize'
 
 import "bootstrap/dist/css/bootstrap.min.css"
 import "bootstrap-vue/dist/bootstrap-vue.css"
 
 Vue.use(VueRouter)
 Vue.use(BootstrapVue)
+Vue.use(VueTextareaAutosize)
 Vue.use(VueTimeago, {
   locale: 'en',
   locales: {

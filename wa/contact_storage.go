@@ -10,17 +10,17 @@ import (
 const ContactCollName = "contacts"
 
 type WaContact struct {
-	Jid    string `bson:"jid"`
-	Notify string `bson:"notify",omitempty`
-	Name   string `bson:"name",omitempty`
-	Short  string `bson:"short",omitempty`
+	Jid    string `bson:"jid" json:"jid"`
+	Notify string `bson:"notify" json:"notify"`
+	Name   string `bson:"name" json:"name"`
+	Short  string `bson:"short" json:"short"`
 }
 
 type Contact struct {
-	ID          bson.ObjectId `bson:"_id"`
-	OwnerNumber string        `bson:"ownerNumber"`
-	JID         string        `bson:"jid"`
-	Contact     *WaContact    `bson:"contact"`
+	ID          bson.ObjectId `bson:"_id" json:"id"`
+	OwnerNumber string        `bson:"ownerNumber" json:"ownerNumber"`
+	JID         string        `bson:"jid" json:"jid"`
+	Contact     *WaContact    `bson:"contact" json:"contact"`
 }
 
 type Contacts []Contact
