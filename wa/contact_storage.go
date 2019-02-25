@@ -5,15 +5,22 @@ import (
 
 	mgo "github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
-	whatsapp "github.com/slaveofcode/go-whatsapp"
 )
 
 const ContactCollName = "contacts"
 
+type WaContact struct {
+	Jid    string `bson:"jid"`
+	Notify string `bson:"notify",omitempty`
+	Name   string `bson:"name",omitempty`
+	Short  string `bson:"short",omitempty`
+}
+
 type Contact struct {
-	OwnerNumber string           `bson:"ownerNumber"`
-	JID         string           `bson:"jid"`
-	Contact     whatsapp.Contact `bson:"contact"`
+	ID          bson.ObjectId `bson:"_id"`
+	OwnerNumber string        `bson:"ownerNumber"`
+	JID         string        `bson:"jid"`
+	Contact     *WaContact    `bson:"contact"`
 }
 
 type Contacts []Contact
@@ -48,13 +55,11 @@ func (s *ContactStorage) Save(contact *Contact) error {
 		Insert(contact)
 }
 
-func (s *ContactStorage) FetchAll(number string) (error, []Contacts) {
-	var contacts []Contacts
+func (s *ContactStorage) FetchAll(number string) (error, *Contacts) {
+	var contacts Contacts
 
 	sess := s.MgoSession.Copy()
 	defer sess.Close()
-
-	// var iface []map[string]interface{}
 
 	err := sess.DB(DBName()).
 		C(ContactCollName).
@@ -62,8 +67,8 @@ func (s *ContactStorage) FetchAll(number string) (error, []Contacts) {
 		All(&contacts)
 
 	if err != nil {
-		return fmt.Errorf("Error fetch contacts: %v", err), contacts
+		return fmt.Errorf("Error fetch contacts: %v", err), &contacts
 	}
 
-	return nil, contacts
+	return nil, &contacts
 }

@@ -5,6 +5,7 @@ import (
 	"whatdash/wa"
 
 	mgo "github.com/globalsign/mgo"
+	"github.com/globalsign/mgo/bson"
 )
 
 type SessionHandler struct {
@@ -88,9 +89,15 @@ func collectContacts(waMgr *wa.Manager, mgoSession *mgo.Session) {
 				if err != nil {
 					// means contact not found
 					errSaving := cs.Save(&wa.Contact{
+						ID:          bson.NewObjectId(),
 						OwnerNumber: waMgr.OwnerNumber,
 						JID:         jid,
-						Contact:     contact,
+						Contact: &wa.WaContact{
+							Jid:    contact.Jid,
+							Notify: contact.Notify,
+							Name:   contact.Name,
+							Short:  contact.Short,
+						},
 					})
 
 					if errSaving != nil {
