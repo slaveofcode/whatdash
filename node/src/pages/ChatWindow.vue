@@ -13,8 +13,8 @@
           ></ContactItem>
         </div>
         <div class="section-messages">
-          <div class="section-chat-header">
-            <p>TADA Team</p>
+          <div class="section-chat-header" v-show="conversationTitle">
+            <p>{{conversationTitle}}</p>
           </div>
           <div class="section-chat">
             <span class="empty-message hide">Select some chat to start conversation.</span>
@@ -152,7 +152,8 @@ export default {
       chatHistory: [],
       contactChats: [],
       chatInput: null,
-      conversations: []
+      conversationTitle: null,
+      conversations: {}
     }
   },
   watch: {
@@ -192,6 +193,7 @@ export default {
       const parsed = []
       for (const history of chatHistory) {
         const foundContact = contacts.find(c => c.jid == history.wa.jid)
+        const contactNumber = history.wa.jid.split('@')[0]
         let contactName = history.wa.jid.split('@')[0]
         
         if (foundContact) {
@@ -201,7 +203,8 @@ export default {
         }
 
         parsed.push({
-          id: history.jid,
+          id: history.wa.jid,
+          number: contactNumber,
           name: contactName,
           time: new Date(history.lastChatTime * 1000),
           msgCount: history.msgCount,
@@ -214,13 +217,52 @@ export default {
     async loadContactMessages() {},
     async sendMessage(){},
     async poolMessage(){},
-    startConversation(contact) {
-      const conversation = this.conversations.find(c => c.id === contact.id)
+    async startConversation(contact) {
+      const conversation = this.conversations[contact.id]
+
+      console.log('conversation:', this.conversations)
 
       if (!conversation) {
         // load fresh message 
+        const m = await Req.post('/chat/pool', {
+          number: this.detailAccount.number,
+          remoteJid: contact.id,
+          first: true,
+        })
+
+        console.log("status", m.status)
+
+        if (m.status === 200) {
+          console.log('converssation create')
+          this.conversations[contact.id] = {
+            messages: m.data.messages.reverse().map(item => {
+              if (item.wamsg.type === 'text') {
+                return {
+                  msg: item.text
+                }
+              }
+              
+              return {
+                msg: 'non text'
+              }
+            }),
+            totalCount: m.data.totalCount,
+          }
+        }
       } else {
         // load existing message + new message on server 
+        const m = await Req.post('/chat/pool', {
+          number: this.detailAccount.number,
+          remoteJid: contact.id,
+          first: false,
+          lastCount: conversation.totalCount,
+        })
+
+        if (m.status === 200) {
+          console.log('Success loaded next')
+          Object.assign(conversation.messages, m.data.messages)
+          conversation.lastCount = m.data.totalCount
+        }
       }
       
       // check if chat container already created
