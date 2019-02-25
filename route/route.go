@@ -47,6 +47,12 @@ func InitRoutes(s *wa.BucketSession) Routes {
 			Handler: DashboardCtrl.LoadChats,
 		},
 		Route{
+			Name:    "POOL_NEW_MSG",
+			Method:  "POST",
+			Path:    "/chat/pool",
+			Handler: DashboardCtrl.PoolNewMessages,
+		},
+		Route{
 			Name:    "WA_CREATE_SESSION",
 			Method:  "POST",
 			Path:    "/wa/session/create",
