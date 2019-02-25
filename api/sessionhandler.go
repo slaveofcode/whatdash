@@ -59,6 +59,14 @@ func (s *SessionHandler) GetManager(number string, forceNewSession bool) (wa.Man
 	}
 }
 
+func (s *SessionHandler) keepConnAlive(number string) {
+	wrapper := s.Bucket.Get(number)
+
+	if wrapper.Conn == nil || !wrapper.Conn.IsSocketConnected() {
+		s.GetManager(number, true)
+	}
+}
+
 func (s *SessionHandler) CloseManager(number string, force bool) error {
 	waMgr, err := s.GetManager(number, false)
 	if err != nil && !force {
