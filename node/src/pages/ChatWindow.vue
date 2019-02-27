@@ -18,12 +18,13 @@
           </div>
           <div class="section-chat">
             <span class="empty-message" :class="[conversationTitle ? 'hide' : '']">Select some chat to start conversation.</span>
-            <div class="chat-display" v-show="conversation.id === conversationId" v-for="(key, conversation) in conversations" :key="conversation.id">
+            <span class="empty-message loading" v-show="conversationId && !conversations[conversationId]">Loading messages...</span>
+            <div class="chat-display" v-show="key === conversationId" v-for="(conversation, key) in conversations" :key="key">
               <MessageItem
-                v-for="(item, idx) in conversation.displayMessages"
+                v-for="(msg, idx) in conversation.displayMessages"
                 :key="idx"
-                from-me="item.isMe"
-                messages="item.messages"
+                v-bind:me="msg.isMe"
+                v-bind:messages="msg.messages"
               ></MessageItem>
             </div>
           </div>
@@ -94,6 +95,10 @@
   padding-top: 25vh;
 }
 
+.section-chat .empty-message.loading {
+  color: #075419;
+}
+
 .section-chat .empty-message.hide,
 .section-chat .chat-display.hide,
 .section-chat-header.hide {
@@ -146,7 +151,7 @@ export default {
   },
   data() {
     return {
-      pageTitle: "Chat",
+      pageTitle: "Active Chat",
       detailAccount: null,
       contacts: [],
       chatHistory: [],
@@ -182,6 +187,8 @@ export default {
         this.contacts,
         this.chatHistory
       );
+
+      this.pageTitle = `Active Chat on [${this.detailAccount.number}]`
     },
     async loadAccountDetail(accId) {
       const acc = await Req.get(`/account/detail/${accId}`);
@@ -222,7 +229,6 @@ export default {
     parseMessageItem(item) {
       const waMsg = item.wamsg;
       const waInfo = waMsg.info;
-      console.log(waInfo.fromMe)
       if (waMsg.type === 'text') {
         return {
           id: waInfo.id,
@@ -298,14 +304,15 @@ export default {
 
               if (m.status === 200) {
                 const msgs = this.parseMessages(m.data.messages)
-                this.conversations[contact.id] = {
+                this.$set(this.conversations, contact.id, {
                   messages: msgs,
                   displayMessages: this.parseMessageDisplay(msgs),
                   lastCount: m.data.totalCount
-                };
+                })
+
               }
 
-              this.activeConversationPool = false;
+              this.activeConversationPool = false
             } else {
               // load existing message + new message on server
               const m = await Req.post("/chat/pool", {
@@ -319,18 +326,23 @@ export default {
               });
 
               if (m.status === 200) {
-                const msgs = this.parseMessages(m.data.messages)
-                Object.assign(conversation.messages, msgs);
-                Object.assign(conversation.displayMessages, this.parseMessageDisplay(msgs));
-                conversation.lastCount = m.data.totalCount;
+                const newMsgs = this.parseMessages(m.data.messages)
+                const cvsMsgs = conversation.messages.concat(newMsgs)
+                const disMsgs = conversation.displayMessages.concat(newMsgs)
+
+                this.$set(this.conversations, contact.id, {
+                  messages: cvsMsgs,
+                  displayMessages: disMsgs,
+                  lastCount: m.data.totalCount,
+                })
               }
 
-              this.activeConversationPool = false;
+              this.activeConversationPool = false
             }
           } catch (err) {
             console.log("Error Pool:", err);
             source.cancel('Any active pool canceled.')
-            this.activeConversationPool = false;
+            this.activeConversationPool = false
           }
         }
       }, 300);
