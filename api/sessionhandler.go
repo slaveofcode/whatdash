@@ -3,6 +3,9 @@ package api
 import (
 	"fmt"
 	"whatdash/wa"
+
+	mgo "github.com/globalsign/mgo"
+	"github.com/globalsign/mgo/bson"
 )
 
 type SessionHandler struct {
@@ -22,19 +25,13 @@ func (s *SessionHandler) GetManager(number string, forceNewSession bool) (wa.Man
 		waMgr = wa.Manager{Conn: wrapper.Conn, OwnerNumber: number}
 		return waMgr, nil
 	} else {
-
-		// handle existing connection to be replaced
-		// if wrapper.Conn != nil && wrapper.Conn.IsSocketConnected() {
-		// 	wrapper.Conn.Logout()
-		// 	s.Bucket.Remove(number)
-		// }
-
 		newConn, err := wa.Connect()
 
 		if err != nil {
 			return waMgr, err
 		}
 
+		// Session fetch
 		sessStorage := wa.SessionStorage{MgoSession: s.Bucket.MgoSession}
 		session, err := sessStorage.Get(number)
 		if err != nil {
@@ -45,7 +42,7 @@ func (s *SessionHandler) GetManager(number string, forceNewSession bool) (wa.Man
 		newSession, err := waMgr.ReloginAccount(session)
 
 		if err == nil {
-			// re-store session to file
+			// re-store new session
 			s.Bucket.Save(number, newConn, newSession)
 
 			// added message handler
@@ -53,9 +50,20 @@ func (s *SessionHandler) GetManager(number string, forceNewSession bool) (wa.Man
 				MgoSession:  s.Bucket.MgoSession,
 				OwnerNumber: number,
 			})
+
+			// collecting contacts
+			go collectContacts(&waMgr, s.Bucket.MgoSession)
 		}
 
 		return waMgr, err
+	}
+}
+
+func (s *SessionHandler) keepConnAlive(number string) {
+	wrapper := s.Bucket.Get(number)
+
+	if wrapper.Conn == nil || !wrapper.Conn.IsSocketConnected() {
+		s.GetManager(number, true)
 	}
 }
 
@@ -73,4 +81,42 @@ func (s *SessionHandler) CloseManager(number string, force bool) error {
 	}
 
 	return nil
+}
+
+func collectContacts(waMgr *wa.Manager, mgoSession *mgo.Session) {
+	waMgr.LoadContacts()
+
+	cs := wa.ContactStorage{MgoSession: mgoSession}
+
+	for {
+		contacts := waMgr.GetContacts()
+		if len(contacts) > 0 {
+			// save contact
+			for jid, contact := range contacts {
+				err, _ := cs.Get(waMgr.OwnerNumber, jid)
+				if err != nil {
+					// means contact not found
+					errSaving := cs.Save(&wa.Contact{
+						ID:          bson.NewObjectId(),
+						OwnerNumber: waMgr.OwnerNumber,
+						JID:         jid,
+						Contact: &wa.WaContact{
+							Jid:    contact.Jid,
+							Notify: contact.Notify,
+							Name:   contact.Name,
+							Short:  contact.Short,
+						},
+					})
+
+					if errSaving != nil {
+						fmt.Println("Error saving contact:", jid)
+					}
+				}
+			}
+
+			// exist loop
+			break
+		}
+	}
+
 }

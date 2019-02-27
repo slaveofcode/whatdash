@@ -96,7 +96,6 @@ func (c *WhatsApp) SendText(w http.ResponseWriter, r *http.Request) {
 	var params struct {
 		From    string `json:"from"`
 		To      string `json:"to"`
-		GroupID string `json:"groupId"`
 		Message string `json:"message"`
 	}
 	err := decoder.Decode(&params)
@@ -113,7 +112,7 @@ func (c *WhatsApp) SendText(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = waMgr.SendMessage(params.To, params.Message, params.GroupID)
+	err = waMgr.SendMessage(params.To, params.Message)
 
 	if err != nil {
 		ResponseJSON(w, 200, []byte(`{"status": "fail"}`))
@@ -121,6 +120,36 @@ func (c *WhatsApp) SendText(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ResponseJSON(w, 200, []byte(`{"status": "sent"}`))
+	return
+}
+
+func (c *WhatsApp) LoadContacts(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+	var params struct {
+		Number       string `json:"number"`
+		ReloadSocket bool   `json:"reloadSocket"`
+	}
+	err := decoder.Decode(&params)
+
+	if err != nil {
+		ShowError(w, "Invalid request")
+		return
+	}
+
+	waMgr, err := c.GetManager(params.Number, params.ReloadSocket)
+	if err != nil {
+		ResponseJSON(w, 400, []byte(`{"status": "failed", "reason": "`+err.Error()+`"}`))
+		return
+	}
+
+	err = waMgr.LoadContacts()
+
+	if err != nil {
+		ResponseJSON(w, 400, []byte(`{"status": "failed"}`))
+		return
+	}
+
+	ResponseJSON(w, 200, []byte(`{"status": "requested"}`))
 	return
 }
 
@@ -136,14 +165,8 @@ func (c *WhatsApp) GetContacts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	waMgr, err := c.GetManager(params.Number, false)
-
-	if err != nil {
-		ResponseJSON(w, 400, []byte(`{"status": "please login first"}`))
-		return
-	}
-
-	contacts := waMgr.GetContacts()
+	contactStorage := wa.ContactStorage{MgoSession: c.Bucket.MgoSession}
+	err, contacts := contactStorage.FetchAll(params.Number)
 
 	data, _ := json.Marshal(contacts)
 

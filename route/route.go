@@ -25,8 +25,14 @@ func InitRoutes(s *wa.BucketSession) Routes {
 		Route{
 			Name:    "LIST_CONNECTED_ACCOUNTS",
 			Method:  "GET",
-			Path:    "/connected-accounts",
+			Path:    "/account/list-connected",
 			Handler: DashboardCtrl.ListConnectedAccounts,
+		},
+		Route{
+			Name:    "DETAIL_ACCOUNT",
+			Method:  "GET",
+			Path:    "/account/detail/{id}",
+			Handler: DashboardCtrl.DetailAccount,
 		},
 		Route{
 			Name:    "LOAD_CHAT_HISTORY",
@@ -39,6 +45,12 @@ func InitRoutes(s *wa.BucketSession) Routes {
 			Method:  "POST",
 			Path:    "/chat/list",
 			Handler: DashboardCtrl.LoadChats,
+		},
+		Route{
+			Name:    "POOL_NEW_MSG",
+			Method:  "POST",
+			Path:    "/chat/pool",
+			Handler: DashboardCtrl.PoolNewMessages,
 		},
 		Route{
 			Name:    "WA_CREATE_SESSION",
@@ -57,6 +69,12 @@ func InitRoutes(s *wa.BucketSession) Routes {
 			Method:  "POST",
 			Path:    "/wa/session/destroy",
 			Handler: WhatsAppCtrl.Destroy,
+		},
+		Route{
+			Name:    "WA_LOAD_CONTACTS",
+			Method:  "POST",
+			Path:    "/wa/contact/load",
+			Handler: WhatsAppCtrl.LoadContacts,
 		},
 		Route{
 			Name:    "WA_GET_CONTACTS",
