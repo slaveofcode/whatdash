@@ -25,22 +25,16 @@ type Manager struct {
 	OwnerNumber string
 }
 
-func (w *Manager) SendMessage(toNumber, message, groupId string) error {
-	var remoteId string
-	if groupId != "" {
-		remoteId = toNumber + "-" + groupId + "@g.us"
-	} else {
-		remoteId = toNumber + "@s.whatsapp.net"
-	}
+func (w *Manager) SendMessage(jId, message string) error {
 	msg := whatsapp.TextMessage{
 		Info: whatsapp.MessageInfo{
-			RemoteJid: remoteId,
+			RemoteJid: jId,
 		},
 		Text: message,
 	}
 	err := w.Conn.Send(msg)
 	if err != nil {
-		return fmt.Errorf("Error during sending message: %v\n", err)
+		return fmt.Errorf("Error during sending message: %v", err)
 	}
 
 	return nil
