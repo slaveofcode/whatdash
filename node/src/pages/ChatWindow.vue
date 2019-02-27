@@ -183,7 +183,11 @@ export default {
       // detecting ctrl+enter
       if (evt.keyCode === 13 && evt.ctrlKey) {
         // send message
-        console.log("Sending message");
+        this.sendMessageText({
+          number: this.detailAccount.number,
+          jid: this.conversationId,
+          text: this.chatInput,
+        }).catch(err => console.log(err))
         this.chatInput = "";
       }
     },
@@ -222,7 +226,6 @@ export default {
     scrollDownChat() {
       const el = document.querySelector('.section-chat')
       if (el) {
-        console.log('run', el)
         el.scrollTop = el.scrollHeight
       }
     },
@@ -416,6 +419,16 @@ export default {
       // hide existing container if exist and show selected chat
       this.conversationId = contact.id;
       this.conversationTitle = contact.name;
+    },
+    async sendMessageText({number, jid, text}) {
+      await Req.post(
+        "/wa/send/text",
+        {
+          from: number,
+          to: jid,
+          message: text,
+        }
+      );
     }
   }
 };
