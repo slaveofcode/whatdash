@@ -5,11 +5,11 @@
       <PageTitle :text="pageTitle"></PageTitle>
       <div class="chat-container">
         <div class="section-contacts">
-          <ContactItem 
-            v-for="contact in contactChats" 
-            :key="contact.id" 
+          <ContactItem
+            v-for="contact in contactChats"
+            :key="contact.id"
             v-bind:contact="contact"
-            @click.native="startConversation(contact)"
+            @click.native="poolConversation(contact).catch(err => console.log(err))"
           ></ContactItem>
         </div>
         <div class="section-messages">
@@ -17,20 +17,18 @@
             <p>{{conversationTitle}}</p>
           </div>
           <div class="section-chat">
-            <span class="empty-message hide">Select some chat to start conversation.</span>
-            <div class="chat-display">
-              <MessageItem></MessageItem>
-              <MessageItem from-me="true"></MessageItem>
-              <MessageItem from-me="true"></MessageItem>
-              <MessageItem from-me="true"></MessageItem>
-              <MessageItem from-me="true"></MessageItem>
-              <MessageItem from-me="true"></MessageItem>
-              <MessageItem from-me="true"></MessageItem>
-              <MessageItem from-me="true"></MessageItem>
+            <span class="empty-message" :class="[conversationTitle ? 'hide' : '']">Select some chat to start conversation.</span>
+            <div class="chat-display" v-show="conversation.id === conversationId" v-for="(key, conversation) in conversations" :key="conversation.id">
+              <MessageItem
+                v-for="(item, idx) in conversation.displayMessages"
+                :key="idx"
+                from-me="item.isMe"
+                messages="item.messages"
+              ></MessageItem>
             </div>
           </div>
           <div class="section-input">
-            <textarea-autosize 
+            <textarea-autosize
               class="input-chat"
               placeholder="Type something and press (CTRL+ENTER) to send immediately"
               v-model="chatInput"
@@ -48,7 +46,7 @@
 .chat-container {
   display: flex;
   flex-direction: row;
-  
+
   width: 100%;
   height: 70vh;
 }
@@ -96,7 +94,9 @@
   padding-top: 25vh;
 }
 
-.section-chat .empty-message.hide, .section-chat .chat-display.hide, .section-chat-header.hide {
+.section-chat .empty-message.hide,
+.section-chat .chat-display.hide,
+.section-chat-header.hide {
   display: none;
 }
 
@@ -129,77 +129,83 @@
 }
 </style>
 
-
 <script>
 import PageTitle from "../components/PageTitle.vue";
 import TopNav from "../components/TopNav.vue";
 import ContactItem from "../components/chat/ContactItem.vue";
 import MessageItem from "../components/chat/MessageItem.vue";
 import Req from "../req";
+import { axios } from "../req";
 
 export default {
   components: {
     TopNav,
     PageTitle,
     MessageItem,
-    ContactItem,
+    ContactItem
   },
   data() {
     return {
-      pageTitle: 'Chat',
+      pageTitle: "Chat",
       detailAccount: null,
       contacts: [],
       chatHistory: [],
       contactChats: [],
       chatInput: null,
+      conversationId: null,
       conversationTitle: null,
-      conversations: {}
-    }
+      conversations: {},
+      activeConversation: null,
+      activeConversationPool: false,
+    };
   },
   watch: {
-    '$route': 'initPage',
+    $route: "initPage"
   },
   created() {
-    this.initPage()
+    this.initPage();
   },
   methods: {
     onKeydown(evt) {
       // detecting ctrl+enter
       if (evt.keyCode === 13 && evt.ctrlKey) {
         // send message
-        console.log('Sending message')
-        this.chatInput = ''
+        console.log("Sending message");
+        this.chatInput = "";
       }
     },
     async initPage() {
-      this.detailAccount = await this.loadAccountDetail(this.$route.params.id)
-      this.contacts = await this.loadContacts(this.detailAccount.number)
-      this.chatHistory = await this.loadHistory(this.detailAccount.number)
-      this.contactChats = this.parseHistoryWithContact(this.contacts, this.chatHistory)
+      this.detailAccount = await this.loadAccountDetail(this.$route.params.id);
+      this.contacts = await this.loadContacts(this.detailAccount.number);
+      this.chatHistory = await this.loadHistory(this.detailAccount.number);
+      this.contactChats = this.parseHistoryWithContact(
+        this.contacts,
+        this.chatHistory
+      );
     },
     async loadAccountDetail(accId) {
-      const acc = await Req.get(`/account/detail/${accId}`)
-      return (acc.status === 200) ? acc.data : null
+      const acc = await Req.get(`/account/detail/${accId}`);
+      return acc.status === 200 ? acc.data : null;
     },
     async loadContacts(number) {
-      const c = await Req.post('/wa/contact/list', { number, })
-      return (c.status === 200) ? c.data : []
+      const c = await Req.post("/wa/contact/list", { number });
+      return c.status === 200 ? c.data : [];
     },
     async loadHistory(number) {
-      const c = await Req.post('/chat/history', { number, })
-      return (c.status === 200) ? c.data : []
+      const c = await Req.post("/chat/history", { number });
+      return c.status === 200 ? c.data : [];
     },
     parseHistoryWithContact(contacts, chatHistory) {
-      const parsed = []
+      const parsed = [];
       for (const history of chatHistory) {
-        const foundContact = contacts.find(c => c.jid == history.wa.jid)
-        const contactNumber = history.wa.jid.split('@')[0]
-        let contactName = history.wa.jid.split('@')[0]
-        
+        const foundContact = contacts.find(c => c.jid == history.wa.jid);
+        const contactNumber = history.wa.jid.split("@")[0];
+        let contactName = history.wa.jid.split("@")[0];
+
         if (foundContact) {
-          contactName = !!foundContact.contact.name 
-            ? foundContact.contact.name 
-            : (foundContact.jid.split('@')[0])
+          contactName = !!foundContact.contact.name
+            ? foundContact.contact.name
+            : foundContact.jid.split("@")[0];
         }
 
         parsed.push({
@@ -207,68 +213,133 @@ export default {
           number: contactNumber,
           name: contactName,
           time: new Date(history.lastChatTime * 1000),
-          msgCount: history.msgCount,
-        })
+          msgCount: history.msgCount
+        });
       }
 
-      return parsed
+      return parsed;
     },
-    async loadMessages() {},
-    async loadContactMessages() {},
-    async sendMessage(){},
-    async poolMessage(){},
-    async startConversation(contact) {
-      const conversation = this.conversations[contact.id]
+    parseMessageItem(item) {
+      const waMsg = item.wamsg;
+      const waInfo = waMsg.info;
+      console.log(waInfo.fromMe)
+      if (waMsg.type === 'text') {
+        return {
+          id: waInfo.id,
+          msg: item.text,
+          me: waInfo.fromMe,
+          stat: waInfo.msgStatus,
+        };
+      }
 
-      console.log('conversation:', this.conversations)
+      return {
+        id: waInfo.id,
+        msg: 'non text message',
+        me: waInfo.fromMe,
+        stat: waInfo.msgStatus,
+      };
+    },
+    parseMessages(messages) {
+      if (!messages || messages.length <= 0) return []
+      return messages.reverse().map(item => this.parseMessageItem(item))
+    },
+    parseMessageDisplay(messages) {
+      if (!messages || messages.length <= 0) return []
+      let isSectionMe = null
 
-      if (!conversation) {
-        // load fresh message 
-        const m = await Req.post('/chat/pool', {
-          number: this.detailAccount.number,
-          remoteJid: contact.id,
-          first: true,
-        })
+      const displayMsgs = []
+      for (const msg of messages) {
+        if (msg.me && !isSectionMe) isSectionMe = true
+        if (!msg.me && isSectionMe) isSectionMe = false
 
-        console.log("status", m.status)
-
-        if (m.status === 200) {
-          console.log('converssation create')
-          this.conversations[contact.id] = {
-            messages: m.data.messages.reverse().map(item => {
-              if (item.wamsg.type === 'text') {
-                return {
-                  msg: item.text
-                }
-              }
-              
-              return {
-                msg: 'non text'
-              }
-            }),
-            totalCount: m.data.totalCount,
+        if (displayMsgs.length == 0) {
+          displayMsgs.push({
+            isMe: msg.me,
+            messages: [msg],
+          })
+        } else {
+          if (!isSectionMe) {
+            displayMsgs.push({
+              isMe: msg.me,
+              messages: [msg],
+            })
+          } else if (isSectionMe) {
+            
+            displayMsgs[displayMsgs.length-1].messages.push(msg)
           }
         }
-      } else {
-        // load existing message + new message on server 
-        const m = await Req.post('/chat/pool', {
-          number: this.detailAccount.number,
-          remoteJid: contact.id,
-          first: false,
-          lastCount: conversation.totalCount,
-        })
-
-        if (m.status === 200) {
-          console.log('Success loaded next')
-          Object.assign(conversation.messages, m.data.messages)
-          conversation.lastCount = m.data.totalCount
-        }
       }
-      
+
+      return displayMsgs
+    },
+    async poolConversation(contact) {
+      if (this.activeConversation) clearInterval(this.activeConversation);
+
+      this.activeConversation = setInterval(async () => {
+        const conversation = this.conversations[contact.id];
+
+        if (!this.activeConversationPool) {
+          this.activeConversationPool = true;
+          
+          const cancelToken = axios.CancelToken
+          const source = cancelToken.source()
+
+          try {
+            if (!conversation) {
+              // load fresh message
+              const m = await Req.post("/chat/pool", {
+                number: this.detailAccount.number,
+                remoteJid: contact.id,
+                first: true
+              }, { 
+                cancelToken: source.token, 
+                timeout: 1000 * 30, // 20s
+              });
+
+              if (m.status === 200) {
+                const msgs = this.parseMessages(m.data.messages)
+                this.conversations[contact.id] = {
+                  messages: msgs,
+                  displayMessages: this.parseMessageDisplay(msgs),
+                  lastCount: m.data.totalCount
+                };
+              }
+
+              this.activeConversationPool = false;
+            } else {
+              // load existing message + new message on server
+              const m = await Req.post("/chat/pool", {
+                number: this.detailAccount.number,
+                remoteJid: contact.id,
+                first: false,
+                lastCount: conversation.lastCount
+              }, { 
+                cancelToken: source.token,
+                timeout: 1000 * 30, // 20s
+              });
+
+              if (m.status === 200) {
+                const msgs = this.parseMessages(m.data.messages)
+                Object.assign(conversation.messages, msgs);
+                Object.assign(conversation.displayMessages, this.parseMessageDisplay(msgs));
+                conversation.lastCount = m.data.totalCount;
+              }
+
+              this.activeConversationPool = false;
+            }
+          } catch (err) {
+            console.log("Error Pool:", err);
+            source.cancel('Any active pool canceled.')
+            this.activeConversationPool = false;
+          }
+        }
+      }, 300);
+
       // check if chat container already created
       // hide existing container if exist and show selected chat
-      console.log("start conversation on", contact.name)
+      this.conversationId = contact.id
+      this.conversationTitle = contact.name
     }
   }
-}
+};
 </script>

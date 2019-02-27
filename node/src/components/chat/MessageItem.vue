@@ -1,8 +1,7 @@
 <template>
   <div class="chat-display-item" :class="[fromMe ? 'from-me' : '']">
     <div class="chat-wrapper">
-      <span class="chat-display-msg">Hello</span>
-      <span class="chat-display-msg">How r you?</span>
+      <span class="chat-display-msg" v-for="msg in messages" :key="msg.id">{{ msg.msg }}</span>
     </div>
   </div>
 </template>
@@ -43,6 +42,6 @@
 
 <script>
 export default {
-  props: ['fromMe']
+  props: ['fromMe', 'messages']
 }
 </script>
