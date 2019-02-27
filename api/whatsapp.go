@@ -96,7 +96,6 @@ func (c *WhatsApp) SendText(w http.ResponseWriter, r *http.Request) {
 	var params struct {
 		From    string `json:"from"`
 		To      string `json:"to"`
-		GroupID string `json:"groupId"`
 		Message string `json:"message"`
 	}
 	err := decoder.Decode(&params)
@@ -113,7 +112,7 @@ func (c *WhatsApp) SendText(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = waMgr.SendMessage(params.To, params.Message, params.GroupID)
+	err = waMgr.SendMessage(params.To, params.Message)
 
 	if err != nil {
 		ResponseJSON(w, 200, []byte(`{"status": "fail"}`))
