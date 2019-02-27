@@ -23,8 +23,7 @@
               <MessageItem
                 v-for="(msg, idx) in conversation.displayMessages"
                 :key="idx"
-                v-bind:me="msg.isMe"
-                v-bind:messages="msg.messages"
+                :msg="msg"
               ></MessageItem>
             </div>
           </div>
@@ -165,7 +164,7 @@ export default {
     };
   },
   watch: {
-    $route: "initPage"
+    $route: "initPage",
   },
   created() {
     this.initPage();
@@ -251,29 +250,33 @@ export default {
     },
     parseMessageDisplay(messages) {
       if (!messages || messages.length <= 0) return []
-      let isSectionMe = null
+      let isLastSectionMe = null
 
       const displayMsgs = []
       for (const msg of messages) {
-        if (msg.me && !isSectionMe) isSectionMe = true
-        if (!msg.me && isSectionMe) isSectionMe = false
-
         if (displayMsgs.length == 0) {
           displayMsgs.push({
             isMe: msg.me,
             messages: [msg],
           })
         } else {
-          if (!isSectionMe) {
+          if (!isLastSectionMe && !msg.me) {
             displayMsgs.push({
               isMe: msg.me,
               messages: [msg],
             })
-          } else if (isSectionMe) {
-            
+          } else if (isLastSectionMe && msg.me) {
             displayMsgs[displayMsgs.length-1].messages.push(msg)
+          } else if (!isLastSectionMe && msg.me || isLastSectionMe && !msg.me) {
+            displayMsgs.push({
+              isMe: msg.me,
+              messages: [msg],
+            })
           }
         }
+
+        if (msg.me && !isLastSectionMe) isLastSectionMe = true
+        if (!msg.me && isLastSectionMe || !msg.me && !isLastSectionMe) isLastSectionMe = false
       }
 
       return displayMsgs
@@ -328,13 +331,17 @@ export default {
               if (m.status === 200) {
                 const newMsgs = this.parseMessages(m.data.messages)
                 const cvsMsgs = conversation.messages.concat(newMsgs)
-                const disMsgs = conversation.displayMessages.concat(newMsgs)
+                const disMsgs = this.parseMessageDisplay(cvsMsgs)
 
                 this.$set(this.conversations, contact.id, {
                   messages: cvsMsgs,
                   displayMessages: disMsgs,
                   lastCount: m.data.totalCount,
                 })
+
+                // this.$set(this.conversations[contact.id], 'displayMessages', disMsgs)
+                // this.$set(this.conversations[contact.id], 'lastCount', m.data.totalCount)
+                // await this.$nextTick()
               }
 
               this.activeConversationPool = false
