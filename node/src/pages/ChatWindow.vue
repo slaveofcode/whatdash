@@ -17,14 +17,21 @@
             <p>{{conversationTitle}}</p>
           </div>
           <div class="section-chat">
-            <span class="empty-message" :class="[conversationTitle ? 'hide' : '']">Select some chat to start conversation.</span>
-            <span class="empty-message loading" v-show="conversationId && !conversations[conversationId]">Loading messages...</span>
-            <div class="chat-display" v-show="key === conversationId" v-for="(conversation, key) in conversations" :key="key">
-              <MessageItem
-                v-for="(msg, idx) in conversation.displayMessages"
-                :key="idx"
-                :msg="msg"
-              ></MessageItem>
+            <span
+              class="empty-message"
+              :class="[conversationTitle ? 'hide' : '']"
+            >Select some chat to start conversation.</span>
+            <span
+              class="empty-message loading"
+              v-show="conversationId && !conversations[conversationId]"
+            >Loading messages...</span>
+            <div
+              class="chat-display"
+              v-show="key === conversationId"
+              v-for="(conversation, key) in conversations"
+              :key="key"
+            >
+              <MessageItem v-for="(msg, idx) in conversation.displayMessages" :key="idx" :msg="msg"></MessageItem>
             </div>
           </div>
           <div class="section-input">
@@ -52,7 +59,7 @@
 }
 
 .section-contacts {
-  width: 230px;
+  min-width: 230px;
   height: 100%;
   overflow-y: auto;
   border-bottom: 1px solid #dad8d8;
@@ -160,11 +167,11 @@ export default {
       conversationTitle: null,
       conversations: {},
       activeConversation: null,
-      activeConversationPool: false,
+      activeConversationPool: false
     };
   },
   watch: {
-    $route: "initPage",
+    $route: "initPage"
   },
   created() {
     this.initPage();
@@ -178,6 +185,26 @@ export default {
         this.chatInput = "";
       }
     },
+    base64toBlob(base64Data, contentType) {
+      contentType = contentType || "";
+      var sliceSize = 1024;
+      var byteCharacters = atob(base64Data);
+      var bytesLength = byteCharacters.length;
+      var slicesCount = Math.ceil(bytesLength / sliceSize);
+      var byteArrays = new Array(slicesCount);
+
+      for (var sliceIndex = 0; sliceIndex < slicesCount; ++sliceIndex) {
+        var begin = sliceIndex * sliceSize;
+        var end = Math.min(begin + sliceSize, bytesLength);
+
+        var bytes = new Array(end - begin);
+        for (var offset = begin, i = 0; offset < end; ++i, ++offset) {
+          bytes[i] = byteCharacters[offset].charCodeAt(0);
+        }
+        byteArrays[sliceIndex] = new Uint8Array(bytes);
+      }
+      return new Blob(byteArrays, { type: contentType });
+    },
     async initPage() {
       this.detailAccount = await this.loadAccountDetail(this.$route.params.id);
       this.contacts = await this.loadContacts(this.detailAccount.number);
@@ -187,7 +214,7 @@ export default {
         this.chatHistory
       );
 
-      this.pageTitle = `Active Chat on [${this.detailAccount.number}]`
+      this.pageTitle = `Active Chat on [${this.detailAccount.number}]`;
     },
     async loadAccountDetail(accId) {
       const acc = await Req.get(`/account/detail/${accId}`);
@@ -228,58 +255,57 @@ export default {
     parseMessageItem(item) {
       const waMsg = item.wamsg;
       const waInfo = waMsg.info;
-      if (waMsg.type === 'text') {
+      if (waMsg.type === "text") {
         return {
           id: waInfo.id,
           msg: item.text,
           me: waInfo.fromMe,
-          stat: waInfo.msgStatus,
+          stat: waInfo.msgStatus
         };
       }
 
       return {
         id: waInfo.id,
-        msg: 'non text message',
+        msg: "non text message",
         me: waInfo.fromMe,
-        stat: waInfo.msgStatus,
+        stat: waInfo.msgStatus
       };
     },
     parseMessages(messages) {
-      if (!messages || messages.length <= 0) return []
-      return messages.reverse().map(item => this.parseMessageItem(item))
+      if (!messages || messages.length <= 0) return [];
+      return messages.reverse().map(item => this.parseMessageItem(item));
     },
     parseMessageDisplay(messages) {
-      if (!messages || messages.length <= 0) return []
-      let isLastSectionMe = null
+      if (!messages || messages.length <= 0) return [];
+      let isLastSectionMe = null;
 
-      const displayMsgs = []
+      const displayMsgs = [];
       for (const msg of messages) {
         if (displayMsgs.length == 0) {
           displayMsgs.push({
             isMe: msg.me,
-            messages: [msg],
-          })
+            messages: [msg]
+          });
         } else {
-          if (!isLastSectionMe && !msg.me) {
+          if ((!isLastSectionMe && !msg.me) || (isLastSectionMe && msg.me)) {
+            displayMsgs[displayMsgs.length - 1].messages.push(msg);
+          } else if (
+            (!isLastSectionMe && msg.me) ||
+            (isLastSectionMe && !msg.me)
+          ) {
             displayMsgs.push({
               isMe: msg.me,
-              messages: [msg],
-            })
-          } else if (isLastSectionMe && msg.me) {
-            displayMsgs[displayMsgs.length-1].messages.push(msg)
-          } else if (!isLastSectionMe && msg.me || isLastSectionMe && !msg.me) {
-            displayMsgs.push({
-              isMe: msg.me,
-              messages: [msg],
-            })
+              messages: [msg]
+            });
           }
         }
 
-        if (msg.me && !isLastSectionMe) isLastSectionMe = true
-        if (!msg.me && isLastSectionMe || !msg.me && !isLastSectionMe) isLastSectionMe = false
+        if (msg.me && !isLastSectionMe) isLastSectionMe = true;
+        if ((!msg.me && isLastSectionMe) || (!msg.me && !isLastSectionMe))
+          isLastSectionMe = false;
       }
 
-      return displayMsgs
+      return displayMsgs;
     },
     async poolConversation(contact) {
       if (this.activeConversation) clearInterval(this.activeConversation);
@@ -289,75 +315,82 @@ export default {
 
         if (!this.activeConversationPool) {
           this.activeConversationPool = true;
-          
-          const cancelToken = axios.CancelToken
-          const source = cancelToken.source()
+
+          const cancelToken = axios.CancelToken;
+          const source = cancelToken.source();
 
           try {
             if (!conversation) {
               // load fresh message
-              const m = await Req.post("/chat/pool", {
-                number: this.detailAccount.number,
-                remoteJid: contact.id,
-                first: true
-              }, { 
-                cancelToken: source.token, 
-                timeout: 1000 * 30, // 20s
-              });
+              const m = await Req.post(
+                "/chat/pool",
+                {
+                  number: this.detailAccount.number,
+                  remoteJid: contact.id,
+                  first: true
+                },
+                {
+                  cancelToken: source.token,
+                  timeout: 1000 * 30 // 20s
+                }
+              );
 
               if (m.status === 200) {
-                const msgs = this.parseMessages(m.data.messages)
+                const msgs = this.parseMessages(m.data.messages);
                 this.$set(this.conversations, contact.id, {
                   messages: msgs,
                   displayMessages: this.parseMessageDisplay(msgs),
                   lastCount: m.data.totalCount
-                })
-
+                });
               }
 
-              this.activeConversationPool = false
+              this.activeConversationPool = false;
             } else {
               // load existing message + new message on server
-              const m = await Req.post("/chat/pool", {
-                number: this.detailAccount.number,
-                remoteJid: contact.id,
-                first: false,
-                lastCount: conversation.lastCount
-              }, { 
-                cancelToken: source.token,
-                timeout: 1000 * 30, // 20s
-              });
+              const m = await Req.post(
+                "/chat/pool",
+                {
+                  number: this.detailAccount.number,
+                  remoteJid: contact.id,
+                  first: false,
+                  lastCount: conversation.lastCount
+                },
+                {
+                  cancelToken: source.token,
+                  timeout: 1000 * 30 // 20s
+                }
+              );
 
               if (m.status === 200) {
-                const newMsgs = this.parseMessages(m.data.messages)
-                const cvsMsgs = conversation.messages.concat(newMsgs)
-                const disMsgs = this.parseMessageDisplay(cvsMsgs)
+                const newMsgs = this.parseMessages(m.data.messages);
+                const cvsMsgs = conversation.messages.concat(newMsgs);
+                const disMsgs = this.parseMessageDisplay(cvsMsgs);
 
                 this.$set(this.conversations, contact.id, {
                   messages: cvsMsgs,
                   displayMessages: disMsgs,
-                  lastCount: m.data.totalCount,
-                })
+                  lastCount: m.data.totalCount
+                });
 
                 // this.$set(this.conversations[contact.id], 'displayMessages', disMsgs)
                 // this.$set(this.conversations[contact.id], 'lastCount', m.data.totalCount)
                 // await this.$nextTick()
               }
 
-              this.activeConversationPool = false
+              this.activeConversationPool = false;
             }
           } catch (err) {
             console.log("Error Pool:", err);
-            source.cancel('Any active pool canceled.')
-            this.activeConversationPool = false
+            source.cancel("Any active pool canceled.");
+            this.activeConversationPool = false;
           }
         }
       }, 300);
 
       // check if chat container already created
       // hide existing container if exist and show selected chat
-      this.conversationId = contact.id
-      this.conversationTitle = contact.name
+      this.conversationId = contact.id;
+      this.conversationTitle = contact.name;
     }
   }
 };

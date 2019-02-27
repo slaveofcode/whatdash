@@ -9,11 +9,12 @@
 <style>
 .chat-display-item {
   font-size: 14px;
-  padding: 0 10px;
+  padding: 0 30px;
 }
 
 .chat-display-item > .chat-wrapper {
   float: left;
+  margin-bottom: 10px;
 }
 
 .chat-display-item.from-me  > .chat-wrapper{
@@ -29,7 +30,7 @@
 .chat-display-item .chat-display-msg {
   background: #cccccc;
   padding: 7px 12px;
-  margin-bottom: 2px;
+  margin-bottom: 5px;
   color: #444;
   border-radius: 1em;
   display: block;
