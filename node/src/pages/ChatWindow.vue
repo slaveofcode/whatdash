@@ -30,6 +30,7 @@
               v-show="key === conversationId"
               v-for="(conversation, key) in conversations"
               :key="key"
+              :class="hashCode(key)"
             >
               <MessageItem v-for="(msg, idx) in conversation.displayMessages" :key="idx" :msg="msg"></MessageItem>
             </div>
@@ -103,6 +104,7 @@
 
 .section-chat .empty-message.loading {
   color: #075419;
+  padding-top: 20vh !important;
 }
 
 .section-chat .empty-message.hide,
@@ -204,6 +206,25 @@ export default {
         byteArrays[sliceIndex] = new Uint8Array(bytes);
       }
       return new Blob(byteArrays, { type: contentType });
+    },
+    hashCode(str) {
+      var hash = 0,
+        i,
+        chr;
+      if (str.length === 0) return 'ss' + hash;
+      for (i = 0; i < str.length; i++) {
+        chr = str.charCodeAt(i);
+        hash = (hash << 5) - hash + chr;
+        hash |= 0; // Convert to 32bit integer
+      }
+      return 'ss' + Math.abs(hash);
+    },
+    scrollDownChat() {
+      const el = document.querySelector('.section-chat')
+      if (el) {
+        console.log('run', el)
+        el.scrollTop = el.scrollHeight
+      }
     },
     async initPage() {
       this.detailAccount = await this.loadAccountDetail(this.$route.params.id);
@@ -342,6 +363,10 @@ export default {
                   displayMessages: this.parseMessageDisplay(msgs),
                   lastCount: m.data.totalCount
                 });
+                setTimeout(() => {
+                  this.scrollDownChat()
+                }, 200)
+                
               }
 
               this.activeConversationPool = false;
@@ -372,9 +397,9 @@ export default {
                   lastCount: m.data.totalCount
                 });
 
-                // this.$set(this.conversations[contact.id], 'displayMessages', disMsgs)
-                // this.$set(this.conversations[contact.id], 'lastCount', m.data.totalCount)
-                // await this.$nextTick()
+                setTimeout(() => {
+                  this.scrollDownChat();
+                }, 200)
               }
 
               this.activeConversationPool = false;
