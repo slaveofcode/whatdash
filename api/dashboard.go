@@ -266,7 +266,7 @@ func (c *Dashboard) PoolNewMessages(w http.ResponseWriter, r *http.Request) {
 			}
 
 			// keeping sock connection alive
-			go c.keepConnAlive(params.Number)
+			c.keepConnAlive(params.Number)
 
 			// 150 * 100 / 1000 = 15 secs
 			time.Sleep(time.Millisecond * 150)
