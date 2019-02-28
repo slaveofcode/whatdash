@@ -15,6 +15,9 @@
         <div class="section-messages">
           <div class="section-chat-header" v-show="conversationTitle">
             <p>{{conversationTitle}}</p>
+            <div class="resync-button" @click="resyncSocket(conversationId).catch(err => console.log(err))">
+              <i class="fas fa-sync-alt"></i>
+            </div>
           </div>
           <div class="section-chat">
             <span
@@ -35,7 +38,7 @@
               <MessageItem v-for="(msg, idx) in conversation.displayMessages" :key="idx" :msg="msg"></MessageItem>
             </div>
           </div>
-          <div class="section-input">
+          <div class="section-input" v-show="conversationTitle">
             <textarea-autosize
               class="input-chat"
               placeholder="Type something and press (CTRL+ENTER) to send immediately"
@@ -68,11 +71,35 @@
 }
 
 .section-messages {
+  position: relative;
   display: flex;
   flex-direction: column;
   flex-grow: 1;
   flex-shrink: 1;
   flex-basis: auto;
+}
+
+.resync-button {
+  position: absolute;
+  right: 20px;
+  top: 12px;
+  color: #007bff;
+  background: #ffffff;
+  padding: 5px 10px;
+  border: 1px solid #b6d9ff;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.resync-button:hover {
+  background: #eeeeee;
+  border: 1px solid #cccccc;
+}
+
+.resync-button:active {
+  background: #cccccc;
+  border: 1px solid #aaaaaa;
+  color: #555;
 }
 
 .section-messages .section-chat-header {
@@ -421,6 +448,32 @@ export default {
       this.conversationTitle = contact.name;
     },
     async sendMessageText({number, jid, text}) {
+      // push message into chat window
+      const conversation = this.conversations[jid];
+      const newMsgs = this.parseMessages([
+        {
+          text: text,
+          wamsg: {
+            info: {
+              fromMe: true,
+            },
+            type: 'text'
+          }
+        }
+      ]);
+      const cvsMsgs = conversation.messages.concat(newMsgs);
+      const disMsgs = this.parseMessageDisplay(cvsMsgs);
+
+      this.$set(this.conversations, jid, {
+        messages: cvsMsgs,
+        displayMessages: disMsgs,
+        lastCount: conversation.lastCount
+      });
+      
+      setTimeout(() => {
+        this.scrollDownChat()
+      }, 200)
+
       await Req.post(
         "/wa/send/text",
         {
@@ -429,6 +482,19 @@ export default {
           message: text,
         }
       );
+    },
+    async resyncSocket(jid) {
+      await Req.post(
+        "/wa/connection/terminate",
+        {
+          number: this.detailAccount.number,
+        }
+      );
+
+      this.$delete(this.conversations, jid)
+      // delete this.conversations[jid]
+
+      await poolConversation(jid)
     }
   }
 };

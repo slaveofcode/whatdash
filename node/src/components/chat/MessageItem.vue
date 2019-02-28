@@ -28,7 +28,8 @@
 }
 
 .chat-display-item .chat-display-msg {
-  background: #cccccc;
+  max-width: 400px;
+  background: #bbedc5;
   padding: 7px 12px;
   margin-bottom: 5px;
   color: #444;
@@ -37,7 +38,7 @@
 }
 
 .chat-display-item.from-me .chat-display-msg {
-  background: #bbedc5;
+  background: #cccccc;
 }
 </style>
 
