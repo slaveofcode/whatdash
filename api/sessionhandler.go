@@ -83,6 +83,14 @@ func (s *SessionHandler) CloseManager(number string, force bool) error {
 	return nil
 }
 
+func (s *SessionHandler) TerminateConn(number string) error {
+	waMgr, err := s.GetManager(number, false)
+	if err != nil {
+		return err
+	}
+	return waMgr.DisconnectSocket()
+}
+
 func collectContacts(waMgr *wa.Manager, mgoSession *mgo.Session) {
 	waMgr.LoadContacts()
 

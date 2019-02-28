@@ -81,6 +81,10 @@ func (w *Manager) ReloginAccount(session whatsapp.Session) (*whatsapp.Session, e
 	return &newSession, nil
 }
 
+func (w *Manager) DisconnectSocket() error {
+	return w.Conn.CloseSocket()
+}
+
 func (w *Manager) LogoutAccount() error {
 	return w.Conn.Logout()
 }

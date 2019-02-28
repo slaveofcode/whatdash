@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"net/http"
-	"time"
 	"whatdash/wa"
 
 	whatsapp "github.com/slaveofcode/go-whatsapp"
@@ -88,6 +87,28 @@ func (c *WhatsApp) Destroy(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ResponseJSON(w, 200, []byte(`{"destroyed": true}`))
+	return
+}
+
+func (c *WhatsApp) TerminateConnection(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+	var params struct {
+		Number string `json:"number"`
+	}
+
+	err := decoder.Decode(&params)
+	if err != nil {
+		ShowError(w, "Invalid request")
+		return
+	}
+
+	err = c.TerminateConn(params.Number)
+	if err != nil {
+		ResponseJSON(w, 400, []byte(`{"terminated": false, "error": "`+err.Error()+`"}`))
+		return
+	}
+
+	ResponseJSON(w, 200, []byte(`{"terminated": true}`))
 	return
 }
 
@@ -272,26 +293,26 @@ func (c *WhatsApp) TriggerLoadOldMessage(w http.ResponseWriter, r *http.Request)
 	return
 }
 
-func (c *WhatsApp) LongPoolExp(w http.ResponseWriter, r *http.Request) {
+// func (c *WhatsApp) LongPoolExp(w http.ResponseWriter, r *http.Request) {
 
-	val := make(chan string)
+// 	val := make(chan string)
 
-	go func() {
-		for i := 0; i <= 10; i++ {
-			time.Sleep(time.Second)
-		}
+// 	go func() {
+// 		for i := 0; i <= 10; i++ {
+// 			time.Sleep(time.Second)
+// 		}
 
-		val <- "Finished"
-	}()
+// 		val <- "Finished"
+// 	}()
 
-	var res string
+// 	var res string
 
-	select {
-	case res = <-val:
-		ResponseJSON(w, 200, []byte(`{"status": "`+res+`"}`))
-	case <-time.After(time.Second * 15):
-		ResponseJSON(w, 200, []byte(`{"status": "timeout"}`))
-	}
+// 	select {
+// 	case res = <-val:
+// 		ResponseJSON(w, 200, []byte(`{"status": "`+res+`"}`))
+// 	case <-time.After(time.Second * 15):
+// 		ResponseJSON(w, 200, []byte(`{"status": "timeout"}`))
+// 	}
 
-	return
-}
+// 	return
+// }
