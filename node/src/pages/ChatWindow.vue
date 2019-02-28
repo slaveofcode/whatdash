@@ -9,14 +9,14 @@
             v-for="contact in contactChats"
             :key="contact.id"
             v-bind:contact="contact"
-            @click.native="poolConversation(contact).catch(err => console.log(err))"
+            @click.native="clickOnContact(contact).catch(err => console.log(err))"
           ></ContactItem>
         </div>
         <div class="section-messages">
           <div class="section-chat-header" v-show="conversationTitle">
             <p>{{conversationTitle}}</p>
             <div v-b-tooltip title="Sync socket and messages" class="resync-button socket" @click="resyncSocket(conversationId).catch(err => console.log(err))">
-              <i class="fas fa-sync-alt"></i>
+              <i class="fas fa-sync-alt" :class="[requestSyncSocket ? 'fa-spin' : '']"></i>
             </div>
             <div v-b-tooltip title="Sync messages" class="resync-button messages" @click="resyncConversation(conversationId).catch(err => console.log(err))">
               <i class="fas fa-comments"></i>
@@ -84,10 +84,8 @@
 
 .resync-button {
   position: absolute;
-  color: #007bff;
   background: #ffffff;
   padding: 5px 10px;
-  border: 1px solid #b6d9ff;
   border-radius: 5px;
   cursor: pointer;
 }
@@ -95,11 +93,15 @@
 .resync-button.socket {
   right: 65px;
   top: 12px;
+  color: #ea7038;
+  border: 1px solid #f9b799;
 }
 
 .resync-button.messages {
   right: 20px;
   top: 12px;
+  color: #007bff;
+  border: 1px solid #b6d9ff;
 }
 
 .resync-button:hover {
@@ -207,7 +209,10 @@ export default {
       conversationTitle: null,
       conversations: {},
       activeConversation: null,
-      activeConversationPool: false
+      activeConversationPool: false,
+      requestSyncSocket: false,
+      poolContactId: null,
+      onPoolContacts: false,
     };
   },
   watch: {
@@ -268,6 +273,25 @@ export default {
       }
     },
     async initPage() {
+      try {
+        this.onPoolContacts = true
+        await this.syncContacts()
+        this.onPoolContacts = false  
+      } catch (err) {
+        this.onPoolContacts = false  
+      }
+      
+      this.poolContactId = setInterval(async () => {
+        if (!this.onPoolContacts) {
+          this.onPoolContacts = true
+          await this.syncContacts()
+          this.onPoolContacts = false
+        }        
+      }, 5000)
+
+      this.pageTitle = `Active Chat on [${this.detailAccount.number}]`;
+    },
+    async syncContacts() {
       this.detailAccount = await this.loadAccountDetail(this.$route.params.id);
       this.contacts = await this.loadContacts(this.detailAccount.number);
       this.chatHistory = await this.loadHistory(this.detailAccount.number);
@@ -275,8 +299,6 @@ export default {
         this.contacts,
         this.chatHistory
       );
-
-      this.pageTitle = `Active Chat on [${this.detailAccount.number}]`;
     },
     async loadAccountDetail(accId) {
       const acc = await Req.get(`/account/detail/${accId}`);
@@ -370,6 +392,10 @@ export default {
       }
 
       return displayMsgs;
+    },
+    async clickOnContact(contact) {
+      this.scrollDownChat()
+      await this.poolConversation(contact)
     },
     async poolConversation(contact) {
       if (this.activeConversation) clearInterval(this.activeConversation);
@@ -498,6 +524,7 @@ export default {
       newMsg.sendingOnTheFly = false
     },
     async resyncSocket(jid) {
+      this.requestSyncSocket = true
       await Req.post(
         "/wa/connection/terminate",
         {
@@ -505,7 +532,10 @@ export default {
         }
       );
 
-      this.resyncConversation(jid)
+      setTimeout(() => {
+        this.requestSyncSocket = false
+        this.resyncConversation(jid)
+      }, 3000)
     },
 
     async resyncConversation(jid) {
