@@ -18,8 +18,7 @@
     "vue": "^2.5.11",
     "vue-router": "^3.0.2",
     "vue-textarea-autosize": "^1.0.4",
-    "vue-timeago": "^5.0.0",
-    "vue-websocket": "^0.2.3"
+    "vue-timeago": "^5.0.0"
   },
   "browserslist": [
     "> 1%",
