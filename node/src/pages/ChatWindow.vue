@@ -293,8 +293,17 @@ export default {
     },
     async syncContacts() {
       this.detailAccount = await this.loadAccountDetail(this.$route.params.id);
-      this.contacts = await this.loadContacts(this.detailAccount.number);
-      this.chatHistory = await this.loadHistory(this.detailAccount.number);
+      
+      const contacts = await this.loadContacts(this.detailAccount.number);
+      this.contacts = contacts ? contacts : []
+
+      if (!contacts) {
+        await this.requestContacts(this.detailAccount.number)
+      }
+      
+      const history = await this.loadHistory(this.detailAccount.number);
+      this.chatHistory = history ? history : []
+
       this.contactChats = this.parseHistoryWithContact(
         this.contacts,
         this.chatHistory
@@ -303,6 +312,10 @@ export default {
     async loadAccountDetail(accId) {
       const acc = await Req.get(`/account/detail/${accId}`);
       return acc.status === 200 ? acc.data : null;
+    },
+    async requestContacts(number) {
+      const c = await Req.post('/wa/contact/load', { number });
+      return c.status === 200 ? true : false
     },
     async loadContacts(number) {
       const c = await Req.post("/wa/contact/list", { number });
@@ -342,7 +355,21 @@ export default {
       if (waMsg.type === "text") {
         return {
           id: waInfo.id,
+          type: 'text',
           msg: item.text,
+          me: waInfo.fromMe,
+          stat: waInfo.msgStatus,
+          sendingOnTheFly: onTheFly,
+        };
+      } else if (waMsg.type === 'image') {
+        return {
+          id: waInfo.id,
+          type: 'image',
+          caption: item.caption,
+          image: {
+            thumb: item.thumb,
+            content: item.content,
+          },
           me: waInfo.fromMe,
           stat: waInfo.msgStatus,
           sendingOnTheFly: onTheFly,
@@ -351,7 +378,8 @@ export default {
 
       return {
         id: waInfo.id,
-        msg: "non text message",
+        type: 'unknown',
+        msg: "*unknown message, see on device*",
         me: waInfo.fromMe,
         stat: waInfo.msgStatus,
         sendingOnTheFly: onTheFly,
