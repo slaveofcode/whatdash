@@ -1,7 +1,10 @@
 <template>
   <div class="chat-display-item" :class="[msg.isMe ? 'from-me' : '']">
     <div class="chat-wrapper">
-      <span class="chat-display-msg" v-for="m in msg.messages" :key="m.id">{{ m.msg }}</span>
+      <div v-for="m in msg.messages" :key="m.id">
+        <p class="chat-display-msg">{{ m.msg }}</p>
+        <p class="chat-loading-msg" v-show="m.sendingOnTheFly">sending...</p>
+      </div>
     </div>
   </div>
 </template>
@@ -39,6 +42,12 @@
 
 .chat-display-item.from-me .chat-display-msg {
   background: #cccccc;
+}
+
+.chat-loading-msg {
+  font-size: 12px;
+  color: #cf7400;
+  padding-left: 10px;
 }
 </style>
 

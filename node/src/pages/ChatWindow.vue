@@ -15,8 +15,11 @@
         <div class="section-messages">
           <div class="section-chat-header" v-show="conversationTitle">
             <p>{{conversationTitle}}</p>
-            <div class="resync-button" @click="resyncSocket(conversationId).catch(err => console.log(err))">
+            <div v-b-tooltip title="Sync socket and messages" class="resync-button socket" @click="resyncSocket(conversationId).catch(err => console.log(err))">
               <i class="fas fa-sync-alt"></i>
+            </div>
+            <div v-b-tooltip title="Sync messages" class="resync-button messages" @click="resyncConversation(conversationId).catch(err => console.log(err))">
+              <i class="fas fa-comments"></i>
             </div>
           </div>
           <div class="section-chat">
@@ -38,7 +41,7 @@
               <MessageItem v-for="(msg, idx) in conversation.displayMessages" :key="idx" :msg="msg"></MessageItem>
             </div>
           </div>
-          <div class="section-input" v-show="conversationTitle">
+          <div class="section-input" v-show="conversationTitle && conversations[conversationId]">
             <textarea-autosize
               class="input-chat"
               placeholder="Type something and press (CTRL+ENTER) to send immediately"
@@ -81,14 +84,22 @@
 
 .resync-button {
   position: absolute;
-  right: 20px;
-  top: 12px;
   color: #007bff;
   background: #ffffff;
   padding: 5px 10px;
   border: 1px solid #b6d9ff;
   border-radius: 5px;
   cursor: pointer;
+}
+
+.resync-button.socket {
+  right: 65px;
+  top: 12px;
+}
+
+.resync-button.messages {
+  right: 20px;
+  top: 12px;
 }
 
 .resync-button:hover {
@@ -131,7 +142,7 @@
 
 .section-chat .empty-message.loading {
   color: #075419;
-  padding-top: 20vh !important;
+  padding-top: 23vh !important;
 }
 
 .section-chat .empty-message.hide,
@@ -303,7 +314,7 @@ export default {
 
       return parsed;
     },
-    parseMessageItem(item) {
+    parseMessageItem(item, onTheFly = false) {
       const waMsg = item.wamsg;
       const waInfo = waMsg.info;
       if (waMsg.type === "text") {
@@ -311,7 +322,8 @@ export default {
           id: waInfo.id,
           msg: item.text,
           me: waInfo.fromMe,
-          stat: waInfo.msgStatus
+          stat: waInfo.msgStatus,
+          sendingOnTheFly: onTheFly,
         };
       }
 
@@ -319,7 +331,8 @@ export default {
         id: waInfo.id,
         msg: "non text message",
         me: waInfo.fromMe,
-        stat: waInfo.msgStatus
+        stat: waInfo.msgStatus,
+        sendingOnTheFly: onTheFly,
       };
     },
     parseMessages(messages) {
@@ -450,18 +463,17 @@ export default {
     async sendMessageText({number, jid, text}) {
       // push message into chat window
       const conversation = this.conversations[jid];
-      const newMsgs = this.parseMessages([
-        {
-          text: text,
-          wamsg: {
-            info: {
-              fromMe: true,
-            },
-            type: 'text'
-          }
+      const msgItem = {
+        text: text,
+        wamsg: {
+          info: {
+            fromMe: true,
+          },
+          type: 'text'
         }
-      ]);
-      const cvsMsgs = conversation.messages.concat(newMsgs);
+      }
+      const newMsg = this.parseMessageItem(msgItem, true)
+      const cvsMsgs = conversation.messages.concat([newMsg]);
       const disMsgs = this.parseMessageDisplay(cvsMsgs);
 
       this.$set(this.conversations, jid, {
@@ -482,6 +494,8 @@ export default {
           message: text,
         }
       );
+
+      newMsg.sendingOnTheFly = false
     },
     async resyncSocket(jid) {
       await Req.post(
@@ -491,9 +505,11 @@ export default {
         }
       );
 
-      this.$delete(this.conversations, jid)
-      // delete this.conversations[jid]
+      this.resyncConversation(jid)
+    },
 
+    async resyncConversation(jid) {
+      this.$delete(this.conversations, jid)
       await poolConversation(jid)
     }
   }
