@@ -14,7 +14,7 @@
         </div>
         <div class="section-messages">
           <div class="section-chat-header" v-show="conversationTitle">
-            <p>{{conversationTitle}}</p>
+            <p>{{conversationTitle}} <span class="peer-number">{{conversationPeerNumber}}</span></p>
             <div v-b-tooltip title="Sync socket and messages" class="resync-button socket" @click="resyncSocket(conversationId).catch(err => console.log(err))">
               <i class="fas fa-sync-alt" :class="[requestSyncSocket ? 'fa-spin' : '']"></i>
             </div>
@@ -124,6 +124,16 @@
   border-right: 1px solid #dad8d8;
 }
 
+.section-chat-header .peer-number {
+  font-weight: normal;
+  font-size: 13px;
+  color: #007bff;
+  background: #fff;
+  border-radius: 7px;
+  padding: 3px 8px;
+  border: 1px solid #ccc;
+}
+
 .section-chat {
   display: flex;
   flex-direction: column;
@@ -207,6 +217,7 @@ export default {
       chatInput: null,
       conversationId: null,
       conversationTitle: null,
+      conversationPeerNumber: null,
       conversations: {},
       activeConversation: null,
       activeConversationPool: false,
@@ -509,10 +520,9 @@ export default {
         }
       }, 300);
 
-      // check if chat container already created
-      // hide existing container if exist and show selected chat
       this.conversationId = contact.id;
       this.conversationTitle = contact.name;
+      this.conversationPeerNumber = `+${contact.number}`;
     },
     async sendMessageText({number, jid, text}) {
       // push message into chat window
