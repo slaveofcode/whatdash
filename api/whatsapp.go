@@ -358,7 +358,7 @@ func (c *WhatsApp) LoadContacts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	CollectContacts(&waMgr, c.Bucket.MgoSession)
+	go CollectContacts(&waMgr, c.Bucket.MgoSession)
 
 	ResponseJSON(w, 200, []byte(`{"status": "requested"}`))
 	return
