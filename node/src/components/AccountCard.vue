@@ -17,6 +17,17 @@
         <b-button :to="{name: 'chat', params: { id: account.id } }" size="m" variant="warning">Go Chat</b-button>
       </b-col>
     </b-row>
+    <b-row>
+      <b-col>
+        <b-button 
+          class="float-right" 
+          size="sm" 
+          variant="secondary" 
+          @click="logout(account.number)">
+          <i class="fas fa-power-off"></i>
+        </b-button>
+      </b-col>
+    </b-row>
   </b-card>
 </template>
 
@@ -35,7 +46,33 @@ p.info {
 </style>
 
 <script>
+import Req from "../req";
+
 export default {
-  props: ['account']
+  props: ['account'],
+  data() {
+    return {
+      logoutAttempts: {},
+    }
+  },
+  methods: {
+    async logout(number) {
+      if (!this.logoutAttempts[number]) {
+        this.logoutAttempts[number] = 1
+      } else {
+        this.logoutAttempts[number] = this.logoutAttempts[number] + 1
+      }
+
+      const forceLogout = this.logoutAttempts[number] === 3
+      await this.requestLogoutAccount(number, forceLogout)
+      this.$router.go() 
+    },
+    async requestLogoutAccount(number, force = false) {
+      const c = await Req.post("/wa/session/destroy", { number, force, });
+      const destroyed = (c.status === 200)
+      if (!destroyed) return false
+      return c.data.destroyed
+    }
+  }
 }
 </script>

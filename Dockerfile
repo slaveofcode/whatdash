@@ -18,6 +18,8 @@ COPY --from=builder /etc/passwd /etc/passwd
 COPY --from=builder /go/bin/whatdash /go/bin/whatdash
 COPY --from=builder /go/src/whatdash/static /static
 
-USER appuser
+USER root
+
+EXPOSE 8081
 
 ENTRYPOINT [ "/go/bin/whatdash" ]

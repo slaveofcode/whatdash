@@ -7,9 +7,9 @@ import (
 	"os"
 	"time"
 
+	whatsapp "github.com/Rhymen/go-whatsapp"
 	mgo "github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
-	whatsapp "github.com/slaveofcode/go-whatsapp"
 )
 
 type WASession struct {

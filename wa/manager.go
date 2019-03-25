@@ -3,14 +3,15 @@ package wa
 import (
 	"fmt"
 	"io"
+	"math/rand"
 	"time"
 
-	whatsapp "github.com/slaveofcode/go-whatsapp"
+	whatsapp "github.com/Rhymen/go-whatsapp"
 )
 
 func Connect() (*whatsapp.Conn, error) {
 	// create new connection
-	wac, err := whatsapp.NewConn(60 * time.Second)
+	wac, err := whatsapp.NewConn((60 * 3) * time.Second)
 	wac.SetClientName("WhatDash Dashboard", "WhatDash")
 
 	if err != nil {
@@ -20,42 +21,105 @@ func Connect() (*whatsapp.Conn, error) {
 	return wac, nil
 }
 
+var randomChars = []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+
+func getIDLength() int {
+	min := 20
+	max := 30
+	rand.Seed(time.Now().UnixNano())
+	return rand.Intn(max-min) + min
+}
+
+func generateMessageID() string {
+	c := make([]rune, getIDLength())
+	for i := range c {
+		c[i] = randomChars[rand.Intn(len(randomChars))]
+	}
+	return string(c)
+}
+
 type Manager struct {
 	Conn        *whatsapp.Conn
 	OwnerNumber string
 }
 
-func (w *Manager) SendMessage(jId, message string) error {
+func (w *Manager) SendMessage(jId, message string) (error, string) {
+	msgID := generateMessageID()
+
 	msg := whatsapp.TextMessage{
 		Info: whatsapp.MessageInfo{
+			Id:        msgID,
 			RemoteJid: jId,
 		},
 		Text: message,
 	}
 	err := w.Conn.Send(msg)
 	if err != nil {
-		return fmt.Errorf("Error during sending message: %v", err)
+		return fmt.Errorf("Error during sending message: %v", err), ""
 	}
 
-	return nil
+	return nil, msgID
 }
 
-func (w *Manager) SendImage(toNumber string, img io.Reader, caption string) error {
+func (w *Manager) SendImage(jId string, img io.Reader, imgType, caption string) (error, string) {
+	msgID := generateMessageID()
 	msg := whatsapp.ImageMessage{
 		Info: whatsapp.MessageInfo{
-			RemoteJid: toNumber + "@s.whatsapp.net",
+			Id:        msgID,
+			RemoteJid: jId,
 		},
-		Type:    "image/jpeg",
+		Type:    imgType,
 		Caption: caption,
 		Content: img,
 	}
 
 	err := w.Conn.Send(msg)
 	if err != nil {
-		return fmt.Errorf("Error during sending image: %v\n", err)
+		return fmt.Errorf("Error during sending image: %v\n", err), ""
 	}
 
-	return nil
+	return nil, msgID
+}
+
+func (w *Manager) SendVideo(jId string, vid io.Reader, vidType, caption string) (error, string) {
+	msgID := generateMessageID()
+	msg := whatsapp.VideoMessage{
+		Info: whatsapp.MessageInfo{
+			Id:        msgID,
+			RemoteJid: jId,
+		},
+		Type:    vidType,
+		Caption: caption,
+		Content: vid,
+	}
+
+	err := w.Conn.Send(msg)
+	if err != nil {
+		return fmt.Errorf("Error during sending video: %v\n", err), ""
+	}
+
+	return nil, msgID
+}
+
+func (w *Manager) SendDocument(jId string, doc io.Reader, docType, title string) (error, string) {
+	msgID := generateMessageID()
+
+	msg := whatsapp.DocumentMessage{
+		Info: whatsapp.MessageInfo{
+			Id:        msgID,
+			RemoteJid: jId,
+		},
+		Type:    docType,
+		Title:   title,
+		Content: doc,
+	}
+
+	err := w.Conn.Send(msg)
+	if err != nil {
+		return fmt.Errorf("Error during sending document: %v\n", err), ""
+	}
+
+	return nil, msgID
 }
 
 func (w *Manager) LoginAccount(number string, qrStorage chan string) (*whatsapp.Session, error) {
@@ -72,7 +136,7 @@ func (w *Manager) LoginAccount(number string, qrStorage chan string) (*whatsapp.
 }
 
 func (w *Manager) ReloginAccount(session whatsapp.Session) (*whatsapp.Session, error) {
-	newSession, err := w.Conn.RestoreSession(session)
+	newSession, err := w.Conn.RestoreWithSession(session)
 
 	if err != nil {
 		return nil, fmt.Errorf("Error during restoring session: %v\n", err)
@@ -82,7 +146,8 @@ func (w *Manager) ReloginAccount(session whatsapp.Session) (*whatsapp.Session, e
 }
 
 func (w *Manager) DisconnectSocket() error {
-	return w.Conn.CloseSocket()
+	_, err := w.Conn.Disconnect()
+	return err
 }
 
 func (w *Manager) LogoutAccount() error {
@@ -102,8 +167,8 @@ func (w *Manager) GetContacts() map[string]whatsapp.Contact {
 	return w.Conn.Store.Contacts
 }
 
-func (w *Manager) TriggerLoadMessage(jId string, count int) error {
-	_, err := w.Conn.LoadMessages(jId, count)
+func (w *Manager) TriggerLoadMessage(jId, msgId string, count int) error {
+	_, err := w.Conn.LoadMessages(jId, msgId, count)
 	return err
 }
 

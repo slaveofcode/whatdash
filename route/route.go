@@ -89,6 +89,18 @@ func InitRoutes(s *wa.BucketSession) Routes {
 			Handler: WhatsAppCtrl.SendText,
 		},
 		Route{
+			Name:    "WA_SEND_MEDIA",
+			Method:  "POST",
+			Path:    "/wa/send/media",
+			Handler: WhatsAppCtrl.SendMedia,
+		},
+		Route{
+			Name:    "WA_DOWNLOAD_MEDIA",
+			Method:  "POST",
+			Path:    "/wa/download",
+			Handler: WhatsAppCtrl.DownloadMedia,
+		},
+		Route{
 			Name:    "WA_LOAD_MESSAGES",
 			Method:  "POST",
 			Path:    "/wa/messages/load",
@@ -106,12 +118,6 @@ func InitRoutes(s *wa.BucketSession) Routes {
 			Path:    "/wa/messages/load-prev",
 			Handler: WhatsAppCtrl.TriggerLoadOldMessage,
 		},
-		// Route{
-		// 	Name:    "WA_EXP",
-		// 	Method:  "POST",
-		// 	Path:    "/wa/messages/longpool",
-		// 	Handler: WhatsAppCtrl.LongPoolExp,
-		// },
 		Route{
 			Name:    "WA_TERMINATE_CONN",
 			Method:  "POST",

@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"time"
 	"whatdash/wa"
 
 	mgo "github.com/globalsign/mgo"
@@ -21,7 +22,7 @@ func (s *SessionHandler) GetManager(number string, forceNewSession bool) (wa.Man
 		return waMgr, fmt.Errorf("Session number not registered")
 	}
 
-	if wrapper.Conn != nil && wrapper.Conn.IsSocketConnected() && !forceNewSession {
+	if wrapper.Conn != nil && !forceNewSession {
 		waMgr = wa.Manager{Conn: wrapper.Conn, OwnerNumber: number}
 		return waMgr, nil
 	} else {
@@ -50,53 +51,57 @@ func (s *SessionHandler) GetManager(number string, forceNewSession bool) (wa.Man
 				MgoSession:  s.Bucket.MgoSession,
 				OwnerNumber: number,
 			})
-
-			// collecting contacts
-			go collectContacts(&waMgr, s.Bucket.MgoSession)
 		}
 
 		return waMgr, err
 	}
 }
 
-func (s *SessionHandler) keepConnAlive(number string) {
-	wrapper := s.Bucket.Get(number)
-
-	if wrapper.Conn == nil || !wrapper.Conn.IsSocketConnected() {
-		s.GetManager(number, true)
-	}
-}
-
 func (s *SessionHandler) CloseManager(number string, force bool) error {
-	waMgr, err := s.GetManager(number, false)
-	if err != nil && !force {
-		return err
+	removeAccount := func(number string) {
+		// remove account
+		s.Bucket.Remove(number)
+
+		// remove contacts
+		(&wa.ContactStorage{MgoSession: s.Bucket.MgoSession}).DestroyAll(number)
+
+		mk := wa.MessageKeeper{MgoSession: s.Bucket.MgoSession}
+		// remove files
+		mk.DestroyFiles(number)
+		// remove messages
+		mk.DestroyMessages(number)
 	}
 
-	if err == nil {
+	if !force {
+		waMgr, err := s.GetManager(number, false)
+		if err != nil && !force {
+			return err
+		}
 		waMgr.LogoutAccount()
-		s.Bucket.Remove(number)
-	} else if err != nil && force {
-		s.Bucket.Remove(number)
+		removeAccount(number)
+	} else {
+		removeAccount(number)
 	}
 
 	return nil
 }
 
 func (s *SessionHandler) TerminateConn(number string) error {
-	waMgr, err := s.GetManager(number, false)
+	waMgr, err := s.GetManager(number, true)
 	if err != nil {
 		return err
 	}
 	return waMgr.DisconnectSocket()
 }
 
-func collectContacts(waMgr *wa.Manager, mgoSession *mgo.Session) {
+func CollectContacts(waMgr *wa.Manager, mgoSession *mgo.Session) {
 	waMgr.LoadContacts()
 
 	cs := wa.ContactStorage{MgoSession: mgoSession}
+	tryCount := 0
+	maxTry := 5
 
-	for {
+	for tryCount < maxTry {
 		contacts := waMgr.GetContacts()
 		if len(contacts) > 0 {
 			// save contact
@@ -124,6 +129,9 @@ func collectContacts(waMgr *wa.Manager, mgoSession *mgo.Session) {
 
 			// exist loop
 			break
+		} else {
+			time.Sleep(time.Second * 3)
+			tryCount++
 		}
 	}
 

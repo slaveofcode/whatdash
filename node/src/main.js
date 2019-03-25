@@ -4,6 +4,7 @@ import BootstrapVue from 'bootstrap-vue'
 import VueTimeago from 'vue-timeago'
 import VueTextareaAutosize from 'vue-textarea-autosize'
 import VueQRCodeComponent from 'vue-qrcode-component'
+import VueUploadComp from 'vue-upload-component'
 
 import "bootstrap/dist/css/bootstrap.min.css"
 import "bootstrap-vue/dist/bootstrap-vue.css"
@@ -19,6 +20,7 @@ Vue.use(VueTimeago, {
 })
 
 Vue.component('qr-code', VueQRCodeComponent)
+Vue.component('file-upload', VueUploadComp)
 
 import Home from './pages/Home.vue'
 import Register from './pages/Register.vue'

@@ -72,3 +72,14 @@ func (s *ContactStorage) FetchAll(number string) (error, *Contacts) {
 
 	return nil, &contacts
 }
+
+func (s *ContactStorage) DestroyAll(number string) error {
+	sess := s.MgoSession.Copy()
+	defer sess.Close()
+
+	_, err := sess.DB(DBName()).
+		C(ContactCollName).
+		RemoveAll(bson.M{"ownerNumber": number})
+
+	return err
+}

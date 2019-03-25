@@ -3,7 +3,8 @@ import cfg from './cfg'
 
 const request = axios.create({
   baseURL: cfg.API_BASE,
-  validateStatus: null
+  validateStatus: null,
+  timeout: 1000 * 60,
 })
 
 export default request
