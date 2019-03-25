@@ -1,8 +1,8 @@
 package wa
 
 import (
+	whatsapp "github.com/Rhymen/go-whatsapp"
 	mgo "github.com/globalsign/mgo"
-	whatsapp "github.com/slaveofcode/go-whatsapp"
 )
 
 type ConnWrapper struct {
@@ -59,21 +59,24 @@ func (c *BucketSession) Get(number string) *ConnWrapper {
 		wrapperExist = true
 	}
 
-	if !wrapperExist {
-		session, err := (&SessionStorage{MgoSession: c.MgoSession}).Get(number)
+	session, err := (&SessionStorage{MgoSession: c.MgoSession}).Get(number)
 
-		if err != nil {
-			return nil
-		}
+	if err != nil {
+		return nil
+	}
 
-		if err == nil {
-			wrapper = ConnWrapper{
-				IsFilled: true,
-				Conn:     nil,
-				Sess:     &session,
-			}
-			c.Items[number] = wrapper
+	if err == nil && !wrapperExist {
+		wrapper = ConnWrapper{
+			IsFilled: true,
+			Conn:     nil,
+			Sess:     &session,
 		}
+		c.Items[number] = wrapper
+		return &wrapper
+	}
+
+	if err == nil && wrapperExist {
+		return &wrapper
 	}
 
 	return &wrapper

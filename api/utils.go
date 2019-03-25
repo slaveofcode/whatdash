@@ -2,6 +2,8 @@ package api
 
 import (
 	"net/http"
+	"os"
+	"path"
 )
 
 // ShowError showing error message as json
@@ -21,4 +23,23 @@ func ResponseJSON(w http.ResponseWriter, status int, response []byte) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(status)
 	w.Write(response)
+}
+
+func GetBaseDir() (string, error) {
+	return os.Getwd()
+}
+
+func PrepareUploadDir(dirName string) error {
+	dir, err := GetBaseDir()
+	if err != nil {
+		return err
+	}
+
+	dirPath := path.Join(dir, dirName)
+
+	if _, err := os.Stat(dirPath); !os.IsNotExist(err) {
+		return nil
+	}
+
+	return os.Mkdir(dirPath, 0777)
 }

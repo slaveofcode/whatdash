@@ -101,13 +101,16 @@ func (c *Dashboard) LoadChatHistory(w http.ResponseWriter, r *http.Request) {
 		}},
 	}
 
-	var results []struct {
+	type res struct {
 		ID struct {
 			JIDNumber string `bson:"jid" json:"jid"`
 		} `bson:"_id" json:"wa"`
 		Count     int    `bson:"msgCount" json:"msgCount"`
 		Timestamp uint64 `bson:"timestamp" json:"lastChatTime"`
 	}
+
+	var results []res
+	var finalResults []res
 
 	err = mgoSession.DB(wa.DBName()).
 		C(wa.WaMsgCollName).
@@ -138,7 +141,14 @@ func (c *Dashboard) LoadChatHistory(w http.ResponseWriter, r *http.Request) {
 		return results[a].Timestamp > results[b].Timestamp
 	})
 
-	data, _ := json.Marshal(results)
+	for _, val := range results {
+		// exclude broadcast message
+		if val.ID.JIDNumber != "status@broadcast" {
+			finalResults = append(finalResults, val)
+		}
+	}
+
+	data, _ := json.Marshal(finalResults)
 
 	ResponseJSON(w, 200, data)
 	return
@@ -266,7 +276,7 @@ func (c *Dashboard) PoolNewMessages(w http.ResponseWriter, r *http.Request) {
 			}
 
 			// keeping sock connection alive
-			c.keepConnAlive(params.Number)
+			// c.keepConnAlive(params.Number)
 
 			// 150 * 100 / 1000 = 15 secs
 			time.Sleep(time.Millisecond * 150)

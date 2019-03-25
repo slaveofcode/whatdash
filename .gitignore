@@ -149,3 +149,5 @@ GitHub.sublime-settings
 
 ## go binary produced by vscode
 debug
+
+node/node_modules/

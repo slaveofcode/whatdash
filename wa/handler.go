@@ -1,11 +1,14 @@
 package wa
 
 import (
+	"encoding/json"
 	"fmt"
+	"strings"
+	"time"
 
+	whatsapp "github.com/Rhymen/go-whatsapp"
 	mgo "github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
-	whatsapp "github.com/slaveofcode/go-whatsapp"
 )
 
 type MsgHandler struct {
@@ -34,7 +37,9 @@ func (m *MsgHandler) HandleTextMessage(message whatsapp.TextMessage) {
 				QuotedMessageID: message.Info.QuotedMessageID,
 			},
 		},
-		Text: message.Text,
+		Text:      message.Text,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	})
 
 	if err != nil {
@@ -59,10 +64,12 @@ func (m *MsgHandler) HandleImageMessage(message whatsapp.ImageMessage) {
 				QuotedMessageID: message.Info.QuotedMessageID,
 			},
 		},
-		Type:    message.Type,
-		Caption: message.Caption,
-		Thumb:   message.Thumbnail,
-		Content: content,
+		Type:      message.Type,
+		Caption:   message.Caption,
+		Thumb:     message.Thumbnail,
+		Content:   content,
+		UpdatedAt: time.Now(),
+		CreatedAt: time.Now(),
 	})
 	if err != nil {
 		fmt.Println("Error save img", err)
@@ -74,7 +81,6 @@ func (m *MsgHandler) HandleVideoMessage(message whatsapp.VideoMessage) {
 		ID:          bson.NewObjectId(),
 		OwnerNumber: m.OwnerNumber,
 		WaMsg: WaMsg{
-
 			Type: "video",
 			Info: MsgInfo{
 				ID:              message.Info.Id,
@@ -87,10 +93,12 @@ func (m *MsgHandler) HandleVideoMessage(message whatsapp.VideoMessage) {
 				QuotedMessageID: message.Info.QuotedMessageID,
 			},
 		},
-		Type:    message.Type,
-		Caption: message.Caption,
-		Thumb:   message.Thumbnail,
-		Content: content,
+		Type:      message.Type,
+		Caption:   message.Caption,
+		Thumb:     message.Thumbnail,
+		Content:   content,
+		UpdatedAt: time.Now(),
+		CreatedAt: time.Now(),
 	})
 
 	if err != nil {
@@ -115,8 +123,10 @@ func (m *MsgHandler) HandleAudioMessage(message whatsapp.AudioMessage) {
 				QuotedMessageID: message.Info.QuotedMessageID,
 			},
 		},
-		Type:    message.Type,
-		Content: content,
+		Type:      message.Type,
+		Content:   content,
+		UpdatedAt: time.Now(),
+		CreatedAt: time.Now(),
 	})
 
 	if err != nil {
@@ -146,25 +156,42 @@ func (m *MsgHandler) HandleDocumentMessage(message whatsapp.DocumentMessage) {
 		PageCount: message.PageCount,
 		Thumb:     message.Thumbnail,
 		Content:   content,
+		UpdatedAt: time.Now(),
+		CreatedAt: time.Now(),
 	})
 	if err != nil {
 		fmt.Println("Error save doc", err)
 	}
 }
 
-func (*MsgHandler) HandleStickerMessage(message whatsapp.StickerMessage) {
-	fmt.Println("Sticker message")
-	fmt.Println("Sticker here")
-}
-
-func (*MsgHandler) HandleJsonMessage(message string) {
+func (m *MsgHandler) HandleJsonMessage(message string) {
 	fmt.Println("JSON:", message)
-	// if strings.Contains(data, "Msg") || strings.Contains(data, "Presence") {
-	//   var msg []interface{}
-	//   json.Unmarshal([]byte(data), &msg)
 
-	//   // its now your move to do what you wanted here
-	//   if msg[0] == "Msg" { }
-	//   else if acknowledgements["cmd"] == "acks" {
-	// }
+	if strings.Contains(message, "Msg") || strings.Contains(message, "Presence") || strings.Contains(message, "Cmd") {
+		var msg []interface{}
+		json.Unmarshal([]byte(message), &msg)
+
+		if msg[0] == "Msg" {
+			fmt.Println("JSON Message:", msg[1])
+			parsed, _ := msg[1].(map[string]interface{})
+			if parsed["cmd"] == "ack" {
+				fmt.Println("JSON ACK:", parsed["from"], parsed["to"], parsed["id"], parsed["ack"])
+			}
+		}
+
+		if msg[0] == "Presence" {
+			fmt.Println("JSON Presence:", msg[1])
+			parsed, _ := msg[1].(map[string]interface{})
+			fmt.Println("Presence:", parsed["id"], parsed["type"], parsed["t"])
+		}
+
+		if msg[0] == "Cmd" {
+			fmt.Println("JSON Command:", msg[1])
+			parsed, _ := msg[1].(map[string]interface{})
+			if parsed["type"] == "disconnect" {
+				// user has disconnect the client, forcefully destroy the existing session
+				// (&SessionStorage{MgoSession: m.MgoSession}).Destroy(m.OwnerNumber)
+			}
+		}
+	}
 }
