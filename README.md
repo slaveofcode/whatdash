@@ -1,9 +1,9 @@
 # WhatDash
-Experimental application Whatsapp messaging based on server-side communication bridge.
+Experimental Whatsapp messaging based on the server-side communication bridge.
 
 <img src="https://i.imgur.com/6M0knpk.png" align="right">
 
-This is an experimental project which covering service of whatsapp messaging, so do the development with a caution.
+This is experimental project, so do the development with a caution.
 
 ## Web GUI
 ### Homepage Preview
